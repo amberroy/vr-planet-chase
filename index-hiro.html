@@ -266,6 +266,10 @@ function vrDeviceCallback(vrdevs) {
 
   // kick off rendering
   animate();
+
+  // For HIRO, start in Full-screen VR mode.
+  toggleFS();
+  VRClient.ready();
 }
 
 function toggleVR() {
@@ -493,8 +497,8 @@ function main() {
 
   // HACK to ensure HMD is detected before going into VR rendering mode.
   // Even with 0 timeout it gets called after vrDeviceCallback finishes. 
-  setTimeout(toggleFS, 0);  // Uncomment to start in VR mode.
-  VRClient.ready();
+  //setTimeout(toggleVR, 0);  // Uncomment to start in VR mode.
+
 }
 
 window.addEventListener("load", main, false);
