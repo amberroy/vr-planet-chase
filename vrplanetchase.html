@@ -37,7 +37,7 @@ body {
 }
 </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
   <button onclick="toggleFS();">Enter VR Mode</button><br>
   <div id="container">
     <div id="divL"></div>
@@ -447,16 +447,16 @@ function whileMouseDown(event) {
   var MOVE_ON_CLICK = -25;
   switch (event.which) {
     case 1:
-      // left click
+      // left click: move forwards
       moveCameraForward(MOVE_ON_CLICK);
       break;
     case 2:
-      // If middle button clicked, move backwards.
-      // Back button on Microsoft mouse also sends which=2.
-      moveCameraForward(MOVE_ON_CLICK * -1);
+      // middle click
+      // Back button on Microsoft mouse also sends this; ignore.
       break;
     case 3:
-      // right click: do nothing
+      // right click: move backwards
+      moveCameraForward(MOVE_ON_CLICK * -1);
       break;
 
     default:  
