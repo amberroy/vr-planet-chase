@@ -1,6 +1,7 @@
 VR Planet Chase
 ===============
-World's First browser-based virtual reality game!  [PLAY NOW](http://amberroy.github.io/vr-planet-chase/vrplanetchase.html)
+World's First browser-based virtual reality game!  [PLAY NOW](http://amberroy.github.io/vr-planet-chase/vrplanetchase.html)  
+Share link: http://VRplanetchase.com
 
 This simple but ground-breaking WebVR game is implemented using Javascript and runs in a web browser, unlike Oculus Rift games built for PC or Mac using game engines like Unity3d.
 
