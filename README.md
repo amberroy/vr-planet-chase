@@ -17,8 +17,10 @@ Navigate the asteroid field to reach the Red Planet!
 > **Controls:**
 
 > - **Forward** thrusters: Left mouse button *or* W key 
-> - **Backward** thrusters: Center mouse button *or* S key
-> -- (or thumb Back button, if your mouse has one)
+> - **Backward** thrusters: Center mouse button *or* S key  
+<!--- previous line ends with two spaces to force line break --->
+<!--- github-flavored markdown previewer: http://tmpvar.com/markdown.html --->
+>   (or thumb Back button, if your mouse has one)
 
 To start the game, click the "VR" button at the top-left of the page, or press the Enter key.  This will put your browser into full-screen VR mode, and you may need to click "Allow" to confirm.  Be sure your Oculus Rift DK2 is connected to your computer, or else you will get the "No HMD found" error message.
 
