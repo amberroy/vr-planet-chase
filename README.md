@@ -33,8 +33,8 @@ VR Planet Chase can be played seated in front of your laptop or desktop computer
 If you have questions, comments, or contributions please email VRplanetchase@gmail.com
 
 
-**Credits**
-Game Programmer: Amber Roy
+**Credits**  
+Game Programmer: Amber Roy  
 Special thanks to: [VR Hackathon](http://vrhackathon.com), [SFVR](http://www.meetup.com/virtualreality), [SVVR](http://svvr.com)
 
 
