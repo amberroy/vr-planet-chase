@@ -5,6 +5,7 @@ World's First browser-based virtual reality game!  [PLAY NOW](http://amberroy.gi
 This simple but ground-breaking WebVR game is implemented using Javascript and runs in a web browser, unlike Oculus Rift games built for PC or Mac using game engines like Unity3d.
 
 Requirements:
+
 1. VR-enabled build of Firefox Nightly ([download from Mozilla](http://blog.bitops.com/blog/2014/08/20/updated-firefox-vr-builds))
 2. Oculus Rift DK2 ([order from Oculus](https://www.oculus.com/order/))
 3. Desktop or Laptop computer
