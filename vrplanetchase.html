@@ -15,8 +15,7 @@ body {
 }
 #container {
   position: absolute;
-  /* top: 50px; */
-  top: 150px;
+  top: 50px;
   left: 50px;
 }
 
@@ -38,18 +37,8 @@ body {
 }
 </style>
 </head>
-<body>
-  <div style="width:640px; text-align:center"><h3>VR Planet Chase</h3></div>
-  <button onclick="toggleFS();">VR Mode</button>
-  <-- Click to begin, or press Enter key.
-  Navigate the asteroid field to reach the Red Planet!<br>
-  Left mouse button (or w key): forward thrusters.
-  Middle mouse button (or s key): backward thrusters<br>
-  Created by Amber Roy (<a href="http://github.com/amberroy">amberroy</a>) for the
-  <a href="http://vrhackathon.com">VR Hackathon</a>
-  Oct 18, 2014.  Requires <a
-    href="http://blog.bitops.com/blog/2014/08/20/updated-firefox-vr-builds/">Firefox
-    VR build</a>
+<body oncontextmenu="return false;">
+  <button onclick="toggleFS();">Enter VR Mode</button><br>
   <div id="container">
     <div id="divL"></div>
     <div id="divR"></div>
@@ -458,16 +447,16 @@ function whileMouseDown(event) {
   var MOVE_ON_CLICK = -25;
   switch (event.which) {
     case 1:
-      // left click
+      // left click: move forwards
       moveCameraForward(MOVE_ON_CLICK);
       break;
     case 2:
-      // If middle button clicked, move backwards.
-      // Back button on Microsoft mouse also sends which=2.
-      moveCameraForward(MOVE_ON_CLICK * -1);
+      // middle click
+      // Back button on Microsoft mouse also sends this; ignore.
       break;
     case 3:
-      // right click: do nothing
+      // right click: move backwards
+      moveCameraForward(MOVE_ON_CLICK * -1);
       break;
 
     default:  
