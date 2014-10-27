@@ -6,6 +6,8 @@ Share link: http://VRplanetchase.com
 
 This simple but ground-breaking WebVR game is implemented using Javascript and runs in a web browser, unlike Oculus Rift games built for PC or Mac using game engines like Unity3d.
 
+![VR Planet Chase screenshot](vrplanetchase_screenshot.png)
+
 ###Requirements
 
 1. VR-enabled build of Firefox Nightly ([download from Mozilla](http://blog.bitops.com/blog/2014/08/20/updated-firefox-vr-builds))
