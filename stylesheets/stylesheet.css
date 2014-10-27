@@ -877,7 +877,7 @@ footer .owner p a {
 }
 
 .markdown-body blockquote {
-  font-style: italic;
+  /*font-style: italic; */
   font-family:Georgia, serif;
   font-size: 17px;
   border-top: 3px solid #333;
@@ -886,6 +886,7 @@ footer .owner p a {
   padding-left: 50px;
 }
 
+/*
 .markdown-body blockquote:before {
   font-style: italic;
   font-family: Georgia, serif;
@@ -897,6 +898,7 @@ footer .owner p a {
   display: block;
   float: left;
 }
+*/
 
 .markdown-body img {
   max-width: 100%;
