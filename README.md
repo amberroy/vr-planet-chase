@@ -40,7 +40,7 @@ If you have questions, comments, or contributions please email VRplanetchase@gma
 
 **Credits**  
 Game Programmer: Amber Roy  
-Created on: October 18, 2014
+Created on: October 18, 2014  
 Special thanks to: [VR Hackathon](http://vrhackathon.com), [SFVR](http://www.meetup.com/virtualreality), [SVVR](http://svvr.com)
 
 
