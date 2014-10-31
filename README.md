@@ -45,3 +45,4 @@ Special thanks to: [VR Hackathon](http://vrhackathon.com), [SFVR](http://www.mee
 
 
 Copyright (c) Amber Roy 2014.  All rights reserved.  
+VR Planet Chase [source code](https://github.com/amberroy/vr-planet-chase) is open-source under the MIT license.
