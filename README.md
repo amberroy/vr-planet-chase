@@ -31,9 +31,7 @@ Once you get close enough to the Red Planet it will turn blue.  Congratulations!
 
 > **Tip:** The Red Planet might be hidden behind an asteroid, so if you don't spot it right away, move around and keep looking.
 
-Note there is no "end" to the game, as it was designed to be used in a demo (or party!) situation.  After the player finds the Red Planet once, or as many times as they want, they can pass the Oculus Rift DK2 headset to the next player who can start playing immediately, without reloading the page.  
-
-VR Planet Chase can be played seated in front of your laptop or desktop computer, but is best enjoyed as a "standing VR" experience, so you can turn around 360 degrees.  If you have a wireless mouse, you can hold it in your hand so you don't need to touch the keyboard or desk while playing.  Take care not to get tangled in the cord connecting your Rift to your computer, or use [VR Backpack](http://vrbackpack.com) (one of my other projects) for untethered Oculus Rift gaming.
+Note there is no "end" to the game, as it was designed to be used in a demo (or party!) situation, where users play for a few minutes than pass the Oculus Rift DK2 to the next player. VR Planet Chase can be played seated in front of your laptop or desktop computer, but is best enjoyed as a "standing VR" experience, with a wireless mouse as the input device (which can be held in your hand since only the buttons are used).
 
 If you have questions, comments, or contributions please email VRplanetchase@gmail.com
 
