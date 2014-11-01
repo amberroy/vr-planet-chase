@@ -12,7 +12,8 @@ This simple but ground-breaking WebVR game is implemented using Javascript and r
 
 1. VR-enabled build of Firefox Nightly ([download from Mozilla](http://blog.bitops.com/blog/2014/08/20/updated-firefox-vr-builds))
 2. Oculus Rift DK2 ([order from Oculus](https://www.oculus.com/order/))
-3. Desktop or Laptop computer
+3. Desktop or Laptop computer  
+(tested on Mac OS 10.9 and Windows 8.1)
 
 
 ###How To Play
