@@ -1,0 +1,565 @@
+
+<!DOCTYPE html>
+<!-- Copyright (c) 2014 Amber Roy -->
+<html lang="en">
+<head>
+    <title>VR Planet Chase - WebVR Game</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+body {
+  background:#fff;
+  padding:0;
+  margin:0;
+  font-weight: bold;
+  overflow:hidden;
+}
+#container {
+  /* This works better for cardboard */
+  /*position: absolute; */
+  /* top: 50px;  */
+  /* left: 50px; */
+}
+
+#divL, #divR {
+  display: none;
+
+  position: absolute;
+  width: 50px; height: 50px;
+  background: blue;
+  border: 4px solid red;
+}
+
+#divL {
+  top: calc(50% - 27px); left: calc(25% - 27px);
+}
+
+#divR {
+  top: calc(50% - 27px); left: calc(75% - 27px);
+}
+</style>
+</head>
+<body oncontextmenu="return false;">
+  <table><tr>
+  <td><button onclick="toggleFS();"><h3>Enter VR Mode</h3></button></td>
+  <td><button onclick="toggleCardboard();"><h3>Cardboard Mode</h3></button></td>
+  </tr></table>
+  <div id="container">
+    <div id="divL"></div>
+    <div id="divR"></div>
+  </div>
+
+  <!-- this version of three.js has WebGL Renderer's setSize method modified to take a canvas resolution scale factor -->
+  <script src="files/three.js"></script>
+  <script src="files/vrutils.js"></script>
+  <script src="files/DeviceOrientationControls.js"></script>
+  <script src="files/StereoEffect.js"></script>
+
+<script>
+
+var container;
+
+var camera, scene, renderer;
+var cameraLeft, cameraRight;
+
+var geometry, spheresGroup;
+
+var mouseX = 0, mouseY = 0;
+
+var winRenderWidth = 640; // window.innerWidth;
+var winRenderHeight = winRenderWidth * (1080/1920); // window.innerHeight;
+
+var renderWidth = winRenderWidth;
+var renderHeight = winRenderHeight;
+
+var windowHalfX = window.innerWidth / 2;
+var windowHalfY = window.innerHeight / 2;
+
+var vrHMD = null, vrPosDev = null, vrEnabled = false;
+
+var mouseDownIntervalID = -1;
+var redSphere;              // Sphere the player is trying to find.
+var isRedSphereFound = false;
+var graySpheres;            // Array of the asteroids.
+
+var sphereMaterial;
+var redSphereMaterial;
+var redSphereFoundMaterial; // When found, apply the new material.
+var collisionMaterial;      // Used for collision effect.
+
+document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+document.addEventListener( 'mousedown', onDocumentMouseDown, false);
+document.addEventListener( 'mouseup', onDocumentMouseUp, false);
+
+var controls, effect;             // for Cardboard
+var clock = new THREE.Clock();
+var cardboardEnabled = false;
+
+function init() {
+
+  container = document.getElementById("container");
+
+  camera = new THREE.PerspectiveCamera( 60, renderWidth / renderHeight, 1, 10000 );
+  camera.position.z = 500;
+
+  cameraLeft = new THREE.Camera();
+  cameraRight = new THREE.Camera();
+
+  scene = new THREE.Scene();
+
+  // Need light source with phong, or else all the spheres will look black.
+  var pointerOne = new THREE.PointLight(0xffffff);
+  pointerOne.position.set(-100,-90,130);
+  scene.add(pointerOne);
+
+  createSpheres();
+
+  renderer = new THREE.WebGLRenderer();
+  renderer.setClearColor( 0xffffff );
+  renderer.setSize(renderWidth, renderHeight);
+  renderer.domElement.setAttribute("id", "three_canvas");
+  container.appendChild( renderer.domElement );
+
+}
+
+function toggleCardboard() {
+  // Not really a toggle yet since we don't go back to normal mode.
+  // Google cardboard examples uses listeners instead of button toggle:
+  // window.addEventListener('deviceorientation', deviceorientation, true);
+  // renderer.domElement.addEventListener('click', fullscreen, false);
+
+  cardboardEnabled = true;
+  effect = new THREE.StereoEffect(renderer);  // Cardboard
+  controls = new THREE.DeviceOrientationControls(camera, true);
+  controls.connect();
+  controls.update();
+
+  cardboardFullscreen()
+  setTimeout(cardboardResize, 1);
+}
+
+function cardboardFullscreen() {
+  if (container.requestFullscreen) {
+    container.requestFullscreen();
+  } else if (container.msRequestFullscreen) {
+    container.msRequestFullscreen();
+  } else if (container.mozRequestFullScreen) {
+    container.mozRequestFullScreen();
+  } else if (container.webkitRequestFullscreen) {
+    container.webkitRequestFullscreen();
+  }
+}
+
+function cardboardResize() {
+  var width = container.offsetWidth;
+  var height = container.offsetHeight;
+
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(width, height);
+  effect.setSize(width, height);
+}
+
+function createSpheres() {
+  // Use sphere with shiny phong material, but for that we need a light source.
+  // For random color: Math.floor(Math.random() * 0x1000000
+  // For phong params: {color: COLOR_GRAY, specular:0x333333, shininess: 100}
+  // SphereGeometry: radius, widthSegments, heightSegments
+  var geometry = new THREE.SphereGeometry( 50, 16, 16);
+  var COLOR_BLUE = 0x0000ff;
+  var COLOR_RED = 0xff0000;
+  var COLOR_GRAY = 0x808080;
+  var COLOR_GOLD = 0xFFD700;
+  sphereMaterial = new THREE.MeshPhongMaterial({ color: COLOR_GRAY });
+  redSphereMaterial = new THREE.MeshPhongMaterial({ color: COLOR_RED });
+  redSphereFoundMaterial = new THREE.MeshPhongMaterial({ color: COLOR_BLUE });
+  collisionMaterial = new THREE.MeshPhongMaterial({ color: COLOR_GOLD });
+
+  spheresGroup = new THREE.Object3D();
+
+  graySpheres = [];
+  for (var i = 0; i < 200; i ++) {
+
+    var mesh;
+    if (i == 0) {
+      mesh = new THREE.Mesh( geometry, redSphereMaterial );
+      redSphere =  mesh;
+    } else {
+      mesh = new THREE.Mesh( geometry, sphereMaterial );
+      graySpheres.push(mesh);
+    }
+
+    mesh.position.x = Math.random() * 2000 - 1000;
+    mesh.position.y = Math.random() * 2000 - 1000;
+    mesh.position.z = Math.random() * 2000 - 1000;
+    mesh.rotation.x = Math.random() * 2 * Math.PI;
+    mesh.rotation.y = Math.random() * 2 * Math.PI;
+    mesh.matrixAutoUpdate = false;
+    mesh.updateMatrix();
+
+    spheresGroup.add(mesh);
+  }
+
+  scene.add(spheresGroup);
+
+}
+
+
+function setRenderSize(width, height, vr) {
+  // these are only used for mouse handling
+  windowHalfX = window.innerWidth / 2;
+  windowHalfY = window.innerHeight / 2;
+
+  if (vr) {
+    cameraLeft.projectionMatrix = FovToProjection(vrHMD.getRecommendedEyeFieldOfView("left"));
+    cameraRight.projectionMatrix = FovToProjection(vrHMD.getRecommendedEyeFieldOfView("right"));
+
+    var leftTx = vrHMD.getEyeTranslation("left");
+    var rightTx = vrHMD.getEyeTranslation("right");
+
+    cameraLeft.position.add(new THREE.Vector3(leftTx.x, leftTx.y, leftTx.z));
+    cameraRight.position.add(new THREE.Vector3(rightTx.x, rightTx.y, rightTx.z));
+
+    renderer.setSize(width * 2, height, true, 2);
+    container.style.width = (width * 2) + "px";
+    container.style.height = height + "px";
+  } else {
+    camera.aspect = renderWidth / renderHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(width, height);
+    container.style.width = width + "px";
+    container.style.height = height + "px";
+  }
+
+  renderWidth = width;
+  renderHeight = height;
+}
+
+function onDocumentMouseMove(event) {
+  mouseX = ( event.clientX - windowHalfX ) * 10;
+  mouseY = ( event.clientY - windowHalfY ) * 10;
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  render();
+}
+
+function render() {
+  renderer.enableScissorTest(true);
+
+  if (cardboardEnabled) {
+    // Move camera forward continuously.
+    moveCameraForward(-1);
+
+    cardboardResize();  
+    camera.updateProjectionMatrix();
+    controls.update(clock.getDelta);
+
+    // Render using stero effect.
+    effect.render(scene, camera);  
+    return;
+  }
+
+  if (vrEnabled) {
+    // read the orientation from the HMD, and set the rotation on both cameras
+    var state = vrPosDev.getState();
+    var qrot = new THREE.Quaternion();
+    qrot.set(state.orientation.x, state.orientation.y, state.orientation.z, state.orientation.w);
+    cameraLeft.setRotationFromQuaternion(qrot);
+    cameraRight.setRotationFromQuaternion(qrot);
+
+    // render left eye
+    renderer.setViewport(0, 0, renderWidth, renderHeight);
+    renderer.setScissor(0, 0, renderWidth, renderHeight);
+    renderer.render(scene, cameraLeft);
+
+    // render right eye
+    renderer.setViewport(renderWidth, 0, renderWidth, renderHeight);
+    renderer.setScissor(renderWidth, 0, renderWidth, renderHeight);
+    renderer.render(scene, cameraRight);
+  } else {
+    renderer.setViewport(0, 0, renderWidth, renderHeight);
+    renderer.setScissor(0, 0, renderWidth, renderHeight);
+    renderer.render(scene, camera);
+  }
+}
+
+function vrDeviceCallback(vrdevs) {
+
+  // First, find a HMD -- just use the first one we find
+  for (var i = 0; i < vrdevs.length; ++i) {
+       console.log(vrdevs[i]);
+    if (vrdevs[i] instanceof HMDVRDevice) {
+      vrHMD = vrdevs[i];
+      break;
+    }
+  }
+
+  if (!vrHMD)
+   return;
+
+  // Then, find that HMD's position sensor
+  for (var i = 0; i < vrdevs.length; ++i) {
+    if (vrdevs[i] instanceof PositionSensorVRDevice &&
+        vrdevs[i].hardwareUnitId == vrHMD.hardwareUnitId)
+    {
+      vrPosDev = vrdevs[i];
+      break;
+    }
+  }
+
+  if (!vrPosDev) {
+    alert("Found a HMD, but didn't find its orientation sensor?");
+  }
+
+  // kick off rendering
+  animate();
+}
+
+function toggleVR() {
+  // Used only for debugging, to force toggling VR rendering w/o fullscreen
+  if (!vrHMD) {
+    alert("no HMD found");
+    return;
+  }
+
+  vrEnabled = !vrEnabled;
+
+  // Assume browser is running in full-screen mode.
+  // On Firefox, use Cmd-Shift-F on Mac. Hide toolbars with this addon:
+  // https://addons.mozilla.org/en-us/firefox/addon/old-lion-fullscreen
+  if (vrEnabled) {
+    renderWidth = screen.availWidth / 2;
+    renderHeight = screen.availHeight;
+  }
+
+  setRenderSize(renderWidth, renderHeight, vrEnabled);
+  vrHMD.xxxToggleElementVR(document.getElementById("three_canvas"));
+}
+
+function toggleFS() {
+  if (!vrHMD) {
+    alert("no HMD found");
+    return;
+  }
+
+  container.mozRequestFullScreen({ vrDisplay: vrHMD });
+}
+
+function toggleFS1() {
+  container.mozRequestFullScreen();
+}
+
+function fschange() {
+  if (document.mozFullScreenElement) {
+    renderWidth = screen.availWidth / 2;
+    renderHeight = screen.availHeight;
+    vrEnabled = true;
+  } else {
+    renderWidth = winRenderWidth;
+    renderHeight = winRenderHeight;
+    vrEnabled = false;
+  }
+
+  setRenderSize(renderWidth, renderHeight, vrEnabled);
+}
+
+function onkey(event) {
+  var MOVE_ON_KEY = 25;
+  console.log("onKey", event.charCode)
+
+  if (event.charCode == 'f'.charCodeAt(0)) {
+    toggleFS();
+  } else if (event.charCode == 'z'.charCodeAt(0)) {
+    container.mozRequestFullScreen();
+  } else if (event.charCode == 'v'.charCodeAt(0)) {
+    toggleVR();
+  } else if (event.charCode == 't'.charCodeAt(0)) {
+    toggleFS1();
+
+  } else if (event.charCode == 'w'.charCodeAt(0)) {
+
+    // Walk forward
+    moveCameraForward(MOVE_ON_KEY * -1);
+
+  } else if (event.charCode == 's'.charCodeAt(0)) {
+
+    // Walk backwards
+    moveCameraForward(MOVE_ON_KEY);
+
+  } else if (event.charCode == 0) {
+    
+    console.log("keycode", event.keyCode)
+    // Handle non-character keys
+    switch(event.keyCode) {
+      case 13: // Enter key
+        toggleFS();
+        break;
+      case 37: // Left arrow.
+        break;
+      case 38: // Up arrow.
+        break;
+      case 39: // Right arrow.
+        break;
+      case 40: // Down arrow.
+        break;
+    }
+
+  } else {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+function moveCameraForward(moveDistance) {
+
+  // Check for collision using current camera, but move both
+  // sets of cameras in case we toggle vrEnabled (although
+  // we still don't end up in exactly the same place somehow).
+  if (vrEnabled) {
+
+    // Either left or right camera works.
+    var newCamera = cameraLeft.clone();   
+    newCamera.translateZ(moveDistance);
+    if (!checkCollision(newCamera.position)) {
+      cameraLeft.translateZ(moveDistance);
+      cameraRight.translateZ(moveDistance);
+      camera.translateZ(moveDistance);
+    }
+  } else {
+    var newCamera = camera.clone();   
+    newCamera.translateZ(moveDistance);
+    if (!checkCollision(newCamera.position)) {
+      cameraLeft.translateZ(moveDistance);
+      cameraRight.translateZ(moveDistance);
+      camera.translateZ(moveDistance);
+    }
+  }
+}
+
+function checkCollision(cameraPosition) {
+
+  var isCollision = false;
+
+  // Check for collision with each sphere.  
+  var graySphereBuffer = 0;
+  for (var i = 0; i < graySpheres.length; i++) {
+    var sphere = graySpheres[i];
+    var distance = cameraPosition.distanceTo(sphere.position);
+    if (distance < sphere.geometry.radius + graySphereBuffer) {
+      isCollision = true;
+      console.log("Collision with sphere", i, "radius", sphere.geometry.radius);
+      console.log("camera position", cameraPosition);
+      console.log("sphere position", sphere.position);
+
+      // Collision effect
+      sphere.material = collisionMaterial;
+      setTimeout(function() {
+        sphere.material = sphereMaterial;
+      }, 2000)
+      break;
+    }
+  }
+
+  // For red sphere, detect collision when in the buffer zone, before camera
+  // collides, so player can see the sphere color change.
+  var distanceToRedSphere = cameraPosition.distanceTo(redSphere.position);
+  var redSphereBuffer = redSphere.geometry.radius * 4;
+  if (distanceToRedSphere < redSphere.geometry.radius + redSphereBuffer) {
+    isCollision = true;
+    if (!isRedSphereFound) {
+
+      // Found it!  Change color.
+      isRedSphereFound = true;
+      var millis = 500;
+      var blinks = 5;
+      redSphere.material = redSphereFoundMaterial; 
+      isRedSphereFound = false;  // DEBUG
+
+      // Reset the game.
+      setTimeout(function() {
+        // Create new group of spheres to navigate.
+        scene.remove(spheresGroup);
+        createSpheres();
+        // We could reset camera here: camera.lookAt(scene.position)
+      }, 2000);   // Wait a few seconds before restarting.
+    }
+  }
+
+  if (isCollision) {
+    console.log("Collision detected");  // for debugging
+  }
+  return isCollision;
+}
+
+// Create timer to repeatedly call method while mouse is down.
+function onDocumentMouseDown(event) {
+
+  if(mouseDownIntervalID == -1) {  // Only create if none exists.
+     // Pass event to the function so we know which button is clicked.
+     var func = function() { whileMouseDown(event); };
+     mouseDownIntervalID = setInterval(func, 100); // every 100ms
+   }
+}
+
+// When mouse button released, clear the timer.
+function onDocumentMouseUp(event) {
+   if(mouseDownIntervalID != -1) {  // Only clear if exists.
+     clearInterval(mouseDownIntervalID);
+     mouseDownIntervalID =- 1;
+   }
+}
+
+function whileMouseDown(event) {
+  // While mouse is down, move the camera forward.
+  console.log("mouse button", event.which);
+
+  var MOVE_ON_CLICK = -25;
+  switch (event.which) {
+    case 1:
+      // left click: move forwards
+      moveCameraForward(MOVE_ON_CLICK);
+      break;
+    case 2:
+      // middle click
+      // Back button on Microsoft mouse also sends this; ignore.
+      break;
+    case 3:
+      // right click: move backwards
+      moveCameraForward(MOVE_ON_CLICK * -1);
+      break;
+
+    default:  
+      // Unrecognized button
+  }
+
+}
+
+function main() {
+  document.addEventListener("mozfullscreenchange", fschange, false);
+  window.addEventListener("keypress", onkey, true);
+  window.addEventListener("keydown", onkeydown, true);
+  init();
+  setRenderSize(renderWidth, renderHeight, false);
+
+  // getVRDevices to check for attached HMDs.
+  if (navigator.getVRDevices)
+    navigator.getVRDevices().then(vrDeviceCallback);
+  else
+    animate();
+
+  // HACK to ensure HMD is detected before going into VR rendering mode.
+  // Even with 0 timeout it gets called after vrDeviceCallback finishes. 
+  //setTimeout(toggleVR, 0);  // Uncomment to start in VR mode.
+}
+
+window.addEventListener("load", main, false);
+
+</script>
+</body>
+</html>
