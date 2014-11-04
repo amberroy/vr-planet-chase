@@ -4,6 +4,9 @@
  * @author bhouston / http://exocortex.com
  */
 
+// WebVR - this version of three.js has WebGL Renderer's setSize method
+// modified to take a canvas resolution scale factor, lines marked with WebVR.
+
 var THREE = { REVISION: '66' };
 
 self.console = self.console || {
@@ -7498,9 +7501,10 @@ THREE.Object3D.prototype = {
 
 	constructor: THREE.Object3D,
 
-	get rotation () {
-		return this._rotation;
-	},
+        // Added for WebVR
+	get rotation () {               // WebVR
+		return this._rotation;  // WebVR
+	},                              // WebVR
 
 	set rotation ( value ) {
 
@@ -7511,9 +7515,10 @@ THREE.Object3D.prototype = {
 
 	},
 
-	get quaternion () {
-		return this._quaternion;
-	},
+        // Added for WebVR
+	get quaternion () {             // WebVR
+		return this._quaternion;// WebVR
+	},                              // WebVR
 
 	set quaternion ( value ) {
 
@@ -16216,12 +16221,13 @@ THREE.CanvasRenderer = function ( parameters ) {
 	this.supportsVertexTextures = function () {};
 	this.setFaceCulling = function () {};
 
-	this.setSize = function ( width, height, updateStyle, canvasResolutionScale ) {
+        // canvasResolutionScale added for WebVR
+	this.setSize = function ( width, height, updateStyle, canvasResolutionScale ) { // WebVR
 
-                if (!canvasResolutionScale) canvasResolutionScale = 1;
+                if (!canvasResolutionScale) canvasResolutionScale = 1;  // WebVR
 
-		_canvasWidth = width * this.devicePixelRatio * canvasResolutionScale;
-		_canvasHeight = height * this.devicePixelRatio * canvasResolutionScale;
+		_canvasWidth = width * this.devicePixelRatio * canvasResolutionScale;   // WebVR
+		_canvasHeight = height * this.devicePixelRatio * canvasResolutionScale; // WebVR
 
 		_canvasWidthHalf = Math.floor( _canvasWidth / 2 );
 		_canvasHeightHalf = Math.floor( _canvasHeight / 2 );
@@ -16229,7 +16235,7 @@ THREE.CanvasRenderer = function ( parameters ) {
 		_canvas.width = _canvasWidth;
 		_canvas.height = _canvasHeight;
 
-		if ( (this.devicePixelRatio !== 1 || canvasResolutionScale != 1) && updateStyle !== false ) {
+		if ( (this.devicePixelRatio !== 1 || canvasResolutionScale != 1) && updateStyle !== false ) {   // WebVR
 
 			_canvas.style.width = width + 'px';
 			_canvas.style.height = height + 'px';
