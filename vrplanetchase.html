@@ -217,7 +217,6 @@ function render() {
     renderer.setScissor(renderWidth, 0, renderWidth, renderHeight);
     renderer.render(scene, cameraRight);
   } else {
-    camera.lookAt( scene.position );
     renderer.setViewport(0, 0, renderWidth, renderHeight);
     renderer.setScissor(0, 0, renderWidth, renderHeight);
     renderer.render(scene, camera);
@@ -355,7 +354,11 @@ function onkey(event) {
 
 function moveCameraForward(moveDistance) {
 
+  // Check for collision using current camera, but move both
+  // sets of cameras in case we toggle vrEnabled (although
+  // we still don't end up in exactly the same place somehow).
   if (vrEnabled) {
+
     // Either left or right camera works.
     var newCamera = cameraLeft.clone();   
     newCamera.translateZ(moveDistance);
@@ -365,7 +368,13 @@ function moveCameraForward(moveDistance) {
       camera.translateZ(moveDistance);
     }
   } else {
-    // Don't allow movement in non-VR mode.
+    var newCamera = camera.clone();   
+    newCamera.translateZ(moveDistance);
+    if (!checkCollision(newCamera.position)) {
+      cameraLeft.translateZ(moveDistance);
+      cameraRight.translateZ(moveDistance);
+      camera.translateZ(moveDistance);
+    }
   }
 }
 
@@ -413,6 +422,7 @@ function checkCollision(cameraPosition) {
         // Create new group of spheres to navigate.
         scene.remove(spheresGroup);
         createSpheres();
+        // We could reset camera here: camera.lookAt(scene.position)
       }, 2000);   // Wait a few seconds before restarting.
     }
   }
