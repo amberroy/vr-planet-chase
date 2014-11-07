@@ -9,6 +9,7 @@ This simple but ground-breaking WebVR game is implemented using Javascript and r
 ![VR Planet Chase screenshot](vrplanetchase_screenshot.png)
 
 ###Requirements
+#### WebVR Mode
 
 1. Oculus Rift DK2 ([order from Oculus](https://www.oculus.com/order/))
 2. Desktop or Laptop computer running:
@@ -16,9 +17,16 @@ This simple but ground-breaking WebVR game is implemented using Javascript and r
   - Oculus Runtime ([download from Oculus](https://developer.oculusvr.com/))
   - VR-enabled build of Firefox Nightly ([download from Mozilla](http://blog.bitops.com/blog/2014/08/20/updated-firefox-vr-builds))
 
+#### Cardboard Mode
+1. VR Viewer [buy from DodoCase](http://www.dodocase.com/products/google-cardboard-vr-goggle-toolkit)
+2. Android smartphone running:
+  - WebGL enabled mobile browser, such as Google Chrome for Android 4+  
+    See <a href="https://cardboard.withgoogle.com/">Google Cardboard FAQ</a> for list of compatible cell phones.  
+    (iPhone not supported since Chrome full-screen not allowed on iOS 8)</ol>
+
 
 ###How To Play
-Navigate the asteroid field to reach the Red Planet!
+####Navigate the asteroid field to reach the Red Planet!
 
 > **Controls:**
 
