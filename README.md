@@ -18,7 +18,7 @@ This simple but ground-breaking WebVR game is implemented using Javascript and r
   - VR-enabled build of Firefox Nightly ([download from Mozilla](http://blog.bitops.com/blog/2014/08/20/updated-firefox-vr-builds))
 
 #### Cardboard Mode
-1. VR Viewer [buy from DodoCase](http://www.dodocase.com/products/google-cardboard-vr-goggle-toolkit)
+1. VR Viewer [(buy from DodoCase)](http://www.dodocase.com/products/google-cardboard-vr-goggle-toolkit)
 2. Android smartphone running:
   - WebGL enabled mobile browser, such as Google Chrome for Android 4+  
     See <a href="https://cardboard.withgoogle.com/">Google Cardboard FAQ</a> for list of compatible cell phones.  
@@ -34,8 +34,11 @@ This simple but ground-breaking WebVR game is implemented using Javascript and r
 > - **Backward** thrusters: Center mouse button *or* S key  
 > - Hold down the button to keep moving.
 > - You will move in the direction you are looking.
+> - **Cardboard Mode**: You will move forward automatically.  
+If you run into an asteroid, turn around to reverse course.
+     
 
-To start the game, click the "VR" button at the top-left of the page, or press the Enter key.  This will put your browser into full-screen VR mode, and you may need to click "Allow" to confirm.  Be sure your Oculus Rift DK2 is connected to your computer, or else you will get the "No HMD found" error message.
+To start the game, click the "VR" button at the top-left of the page, or press the Enter key.  This will put your browser into full-screen VR mode, and you may need to click "Allow" to confirm.  Be sure your Oculus Rift DK2 is connected to your computer, or else you will get the "No HMD found" error message. Alternatively, tap the "Cardboard" button and insert your smartphone into the viewer.
 
 Once you get close enough to the Red Planet it will turn blue.  Congratulations!  Next you will be transported to a new galaxy, with a different asteroid field to explore and a new Red Planet to find.  The asteroid and planet positions are randomly generated, so the difficulty of your search will vary from one galaxy to the next; some will seem easier, some harder.
 
