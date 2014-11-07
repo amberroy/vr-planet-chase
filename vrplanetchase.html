@@ -15,9 +15,10 @@ body {
   overflow:hidden;
 }
 #container {
-  position: absolute;
-  top: 50px;
-  left: 50px;
+  /* This works better for cardboard */
+  /*position: absolute; */
+  /* top: 50px;  */
+  /* left: 50px; */
 }
 
 #divL, #divR {
@@ -39,7 +40,10 @@ body {
 </style>
 </head>
 <body oncontextmenu="return false;">
-  <button onclick="toggleFS();"><h3>Enter VR Mode</h3></button><br>
+  <table><tr>
+  <td><button onclick="toggleFS();"><h3>Enter VR Mode</h3></button></td>
+  <td><button onclick="toggleCardboard();"><h3>Cardboard Mode</h3></button></td>
+  </tr></table>
   <div id="container">
     <div id="divL"></div>
     <div id="divR"></div>
@@ -48,6 +52,8 @@ body {
   <!-- this version of three.js has WebGL Renderer's setSize method modified to take a canvas resolution scale factor -->
   <script src="files/three.js"></script>
   <script src="files/vrutils.js"></script>
+  <script src="files/DeviceOrientationControls.js"></script>
+  <script src="files/StereoEffect.js"></script>
 
 <script>
 
@@ -85,7 +91,12 @@ document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 document.addEventListener( 'mousedown', onDocumentMouseDown, false);
 document.addEventListener( 'mouseup', onDocumentMouseUp, false);
 
+var controls, effect;             // for Cardboard
+var clock = new THREE.Clock();
+var cardboardEnabled = false;
+
 function init() {
+
   container = document.getElementById("container");
 
   camera = new THREE.PerspectiveCamera( 60, renderWidth / renderHeight, 1, 10000 );
@@ -108,6 +119,46 @@ function init() {
   renderer.setSize(renderWidth, renderHeight);
   renderer.domElement.setAttribute("id", "three_canvas");
   container.appendChild( renderer.domElement );
+
+}
+
+function toggleCardboard() {
+  // Not really a toggle yet since we don't go back to normal mode.
+  // Google cardboard examples uses listeners instead of button toggle:
+  // window.addEventListener('deviceorientation', deviceorientation, true);
+  // renderer.domElement.addEventListener('click', fullscreen, false);
+
+  cardboardEnabled = true;
+  effect = new THREE.StereoEffect(renderer);  // Cardboard
+  controls = new THREE.DeviceOrientationControls(camera, true);
+  controls.connect();
+  controls.update();
+
+  cardboardFullscreen()
+  setTimeout(cardboardResize, 1);
+}
+
+function cardboardFullscreen() {
+  if (container.requestFullscreen) {
+    container.requestFullscreen();
+  } else if (container.msRequestFullscreen) {
+    container.msRequestFullscreen();
+  } else if (container.mozRequestFullScreen) {
+    container.mozRequestFullScreen();
+  } else if (container.webkitRequestFullscreen) {
+    container.webkitRequestFullscreen();
+  }
+}
+
+function cardboardResize() {
+  var width = container.offsetWidth;
+  var height = container.offsetHeight;
+
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(width, height);
+  effect.setSize(width, height);
 }
 
 function createSpheres() {
@@ -198,6 +249,19 @@ function animate() {
 
 function render() {
   renderer.enableScissorTest(true);
+
+  if (cardboardEnabled) {
+    // Move camera forward continuously.
+    moveCameraForward(-1);
+
+    cardboardResize();  
+    camera.updateProjectionMatrix();
+    controls.update(clock.getDelta);
+
+    // Render using stero effect.
+    effect.render(scene, camera);  
+    return;
+  }
 
   if (vrEnabled) {
     // read the orientation from the HMD, and set the rotation on both cameras
