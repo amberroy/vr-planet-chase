@@ -18,7 +18,7 @@ This simple but ground-breaking WebVR game is implemented using Javascript and r
   - VR-enabled build of Firefox Nightly ([download from Mozilla](http://blog.bitops.com/blog/2014/08/20/updated-firefox-vr-builds))
 
 #### Cardboard Mode
-1. VR Viewer [(buy from DodoCase)](http://www.dodocase.com/products/google-cardboard-vr-goggle-toolkit)
+1. VR Viewer ([buy from DodoCase](http://www.dodocase.com/products/google-cardboard-vr-goggle-toolkit))
 2. Android smartphone running:
   - WebGL enabled mobile browser, such as Google Chrome for Android 4+  
     See <a href="https://cardboard.withgoogle.com/">Google Cardboard FAQ</a> for list of compatible cell phones.  
