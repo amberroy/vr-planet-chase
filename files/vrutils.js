@@ -1,4 +1,5 @@
 /* author: Vladimir Vukicevic 
+ * company: Mozilla
  * source: http://people.mozilla.org/~vladimir/vr/vrutils.js
  * date:   27-Jul-2014
  */
