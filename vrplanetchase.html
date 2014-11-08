@@ -62,7 +62,7 @@ var container;
 var camera, scene, renderer;
 var cameraLeft, cameraRight;
 
-var geometry, spheresGroup;
+var geometry, gameObjects;
 
 var mouseX = 0, mouseY = 0;
 
@@ -78,14 +78,14 @@ var windowHalfY = window.innerHeight / 2;
 var vrHMD = null, vrPosDev = null, vrEnabled = false;
 
 var mouseDownIntervalID = -1;
-var redSphere;              // Sphere the player is trying to find.
-var isRedSphereFound = false;
-var graySpheres;            // Array of the asteroids.
+var redPlanet;
+var isRedPlanetFound = false;
+var asteroidsArray;
 
-var sphereMaterial;
-var redSphereMaterial;
-var redSphereFoundMaterial; // When found, apply the new material.
-var collisionMaterial;      // Used for collision effect.
+var asteroidMaterial;
+var redPlanetMaterial;
+var redPlaentFoundMaterial;
+var asteroidCollisionMaterial;
 
 var controls, effect;             // for Cardboard
 var clock = new THREE.Clock();
@@ -93,7 +93,8 @@ var cardboardEnabled = false;
 var cardboardMoveForward = true;
 
 
-function init() {
+function initScene() {
+  // Initialize the scene.  
 
   container = document.getElementById("container");
 
@@ -105,12 +106,12 @@ function init() {
 
   scene = new THREE.Scene();
 
-  // Need light source with phong, or else all the spheres will look black.
+  // Need light source with phong material, otherwise spheres look black.
   var pointerOne = new THREE.PointLight(0xffffff);
   pointerOne.position.set(-100,-90,130);
   scene.add(pointerOne);
 
-  createSpheres();
+  createGameObjects();
 
   renderer = new THREE.WebGLRenderer();
   renderer.setClearColor( 0xffffff );
@@ -155,35 +156,48 @@ function cardboardResize() {
   effect.setSize(width, height);
 }
 
-function createSpheres() {
-  // Use sphere with shiny phong material, but for that we need a light source.
+function createGameObjects() {
+  // Create the game world objects and randomize their position.
+
   // For random color: Math.floor(Math.random() * 0x1000000
-  // For phong params: {color: COLOR_GRAY, specular:0x333333, shininess: 100}
-  // SphereGeometry: radius, widthSegments, heightSegments
-  var geometry = new THREE.SphereGeometry( 50, 16, 16);
   var COLOR_BLUE = 0x0000ff;
   var COLOR_RED = 0xff0000;
   var COLOR_GRAY = 0x808080;
   var COLOR_GOLD = 0xFFD700;
-  sphereMaterial = new THREE.MeshPhongMaterial({ color: COLOR_GRAY });
-  redSphereMaterial = new THREE.MeshPhongMaterial({ color: COLOR_RED });
-  redSphereFoundMaterial = new THREE.MeshPhongMaterial({ color: COLOR_BLUE });
-  collisionMaterial = new THREE.MeshPhongMaterial({ color: COLOR_GOLD });
+  var NUM_ASTEROIDS = 200;
 
-  spheresGroup = new THREE.Object3D();
+  // Use sphere with shiny phong material, requries a light source.
+  // SphereGeometry params: radius, widthSegments, heightSegments
+  // Phong params: color, specular(color), shininess
+  var geometry = new THREE.SphereGeometry( 50, 16, 16);
+  asteroidMaterial = new THREE.MeshPhongMaterial({ color: COLOR_GRAY });
+  redPlanetMaterial = new THREE.MeshPhongMaterial({ color: COLOR_RED });
+  redPlaentFoundMaterial = new THREE.MeshPhongMaterial({ color: COLOR_BLUE });
+  asteroidCollisionMaterial = new THREE.MeshPhongMaterial({ color: COLOR_GOLD });
 
-  graySpheres = [];
-  for (var i = 0; i < 200; i ++) {
+  gameObjects = new THREE.Object3D(); // Root of the game objects graph.
+  asteroidsArray = [];                // Used for collision detection.
 
-    var mesh;
-    if (i == 0) {
-      mesh = new THREE.Mesh( geometry, redSphereMaterial );
-      redSphere =  mesh;
-    } else {
-      mesh = new THREE.Mesh( geometry, sphereMaterial );
-      graySpheres.push(mesh);
-    }
+  // Create the asteroids.
+  for (var i = 0; i < NUM_ASTEROIDS; i ++) {
 
+    var asteroid = new THREE.Mesh(geometry, asteroidMaterial);
+    setRandomPosition(asteroid);
+
+    asteroidsArray.push(asteroid);
+    gameObjects.add(asteroid);
+  }
+
+  // Create the planet.
+  redPlanet = new THREE.Mesh(geometry, redPlanetMaterial);
+  setRandomPosition(redPlanet);
+  gameObjects.add(redPlanet);
+
+  scene.add(gameObjects);
+
+}
+
+function setRandomPosition(mesh) {
     mesh.position.x = Math.random() * 2000 - 1000;
     mesh.position.y = Math.random() * 2000 - 1000;
     mesh.position.z = Math.random() * 2000 - 1000;
@@ -191,12 +205,6 @@ function createSpheres() {
     mesh.rotation.y = Math.random() * 2 * Math.PI;
     mesh.matrixAutoUpdate = false;
     mesh.updateMatrix();
-
-    spheresGroup.add(mesh);
-  }
-
-  scene.add(spheresGroup);
-
 }
 
 
@@ -443,45 +451,45 @@ function checkCollision(cameraPosition) {
   var isCollision = false;
 
   // Check for collision with each sphere.  
-  var graySphereBuffer = 0;
-  for (var i = 0; i < graySpheres.length; i++) {
-    var sphere = graySpheres[i];
+  var asteroidBuffer = 0;
+  for (var i = 0; i < asteroidsArray.length; i++) {
+    var sphere = asteroidsArray[i];
     var distance = cameraPosition.distanceTo(sphere.position);
-    if (distance < sphere.geometry.radius + graySphereBuffer) {
+    if (distance < sphere.geometry.radius + asteroidBuffer) {
       isCollision = true;
       console.log("Collision with sphere", i, "radius", sphere.geometry.radius);
       console.log("camera position", cameraPosition);
       console.log("sphere position", sphere.position);
 
       // Collision effect
-      sphere.material = collisionMaterial;
+      sphere.material = asteroidCollisionMaterial;
       setTimeout(function() {
-        sphere.material = sphereMaterial;
+        sphere.material = asteroidMaterial;
       }, 2000)
       break;
     }
   }
 
-  // For red sphere, detect collision when in the buffer zone, before camera
-  // collides, so player can see the sphere color change.
-  var distanceToRedSphere = cameraPosition.distanceTo(redSphere.position);
-  var redSphereBuffer = redSphere.geometry.radius * 4;
-  if (distanceToRedSphere < redSphere.geometry.radius + redSphereBuffer) {
+  // For red planet, detect collision when in the buffer zone, before camera
+  // collides, so player can see the planet color change.
+  var distanceToRedPlanet = cameraPosition.distanceTo(redPlanet.position);
+  var redPlanetBuffer = redPlanet.geometry.radius * 4;
+  if (distanceToRedPlanet < redPlanet.geometry.radius + redPlanetBuffer) {
     isCollision = true;
-    if (!isRedSphereFound) {
+    if (!isRedPlanetFound) {
 
       // Found it!  Change color.
-      isRedSphereFound = true;
+      isRedPlanetFound = true;
       var millis = 500;
       var blinks = 5;
-      redSphere.material = redSphereFoundMaterial; 
+      redPlanet.material = redPlaentFoundMaterial; 
 
       // Reset the game.
       setTimeout(function() {
         // Create new group of spheres to navigate.
-        scene.remove(spheresGroup);
-        createSpheres();
-        isRedSphereFound = false;
+        scene.remove(gameObjects);
+        createGameObjects();
+        isRedPlanetFound = false;
         // We could reset camera here: camera.lookAt(scene.position)
       }, 2000);   // Wait a few seconds before restarting.
     }
@@ -543,8 +551,7 @@ function whileMouseDown(event) {
 
 function main() {
 
-  // Initialize the scene.
-  init();
+  initScene();
   setRenderSize(renderWidth, renderHeight, false);
 
   // getVRDevices to check for attached HMDs.
