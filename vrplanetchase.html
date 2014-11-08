@@ -291,9 +291,10 @@ function vrDeviceCallback(vrdevs) {
 
   // First, find a HMD -- just use the first one we find
   for (var i = 0; i < vrdevs.length; ++i) {
-       console.log(vrdevs[i]);
+    //console.log(vrdevs[i]);
     if (vrdevs[i] instanceof HMDVRDevice) {
       vrHMD = vrdevs[i];
+      console.log('Using HMD:', vrHMD.deviceName);
       break;
     }
   }
@@ -307,6 +308,7 @@ function vrDeviceCallback(vrdevs) {
         vrdevs[i].hardwareUnitId == vrHMD.hardwareUnitId)
     {
       vrPosDev = vrdevs[i];
+      console.log('Using Sensor:', vrPosDev.deviceName);
       break;
     }
   }
@@ -341,20 +343,30 @@ function toggleVR() {
 }
 
 function toggleFS() {
+  console.log("in toggleFS")
   if (!vrHMD) {
     alert("no HMD found");
     return;
   }
 
-  container.mozRequestFullScreen({ vrDisplay: vrHMD });
-}
-
-function toggleFS1() {
-  container.mozRequestFullScreen();
+  if (container.mozRequestFullScreen) {
+    container.mozRequestFullScreen({ vrDisplay: vrHMD });
+  } else if (renderer.domElement.webkitRequestFullscreen) {
+    // Doesn't work on VR-enabled Chrome if we call it on container.
+    renderer.domElement.webkitRequestFullscreen({ vrDisplay: vrHMD });
+  } else {
+    alert("Full Screen VR not supported on this browser")
+  }
 }
 
 function fschange() {
-  if (document.mozFullScreenElement) {
+  if (cardboardEnabled) {
+    return;
+  }
+
+  // Appears the event document.webkitfullscreenchange is generated,
+  // even when we call fullscreen on the renderer.domElement above.
+  if (document.mozFullScreenElement || document.webkitFullscreenElement) {
     renderWidth = screen.availWidth / 2;
     renderHeight = screen.availHeight;
     vrEnabled = true;
@@ -373,12 +385,9 @@ function onkey(event) {
 
   if (event.charCode == 'f'.charCodeAt(0)) {
     toggleFS();
-  } else if (event.charCode == 'z'.charCodeAt(0)) {
-    container.mozRequestFullScreen();
+
   } else if (event.charCode == 'v'.charCodeAt(0)) {
     toggleVR();
-  } else if (event.charCode == 't'.charCodeAt(0)) {
-    toggleFS1();
 
   } else if (event.charCode == 'w'.charCodeAt(0)) {
 
@@ -390,23 +399,10 @@ function onkey(event) {
     // Walk backwards
     moveCameraForward(MOVE_ON_KEY);
 
-  } else if (event.charCode == 0) {
-    
-    console.log("keycode", event.keyCode)
-    // Handle non-character keys
-    switch(event.keyCode) {
-      case 13: // Enter key
-        toggleFS();
-        break;
-      case 37: // Left arrow.
-        break;
-      case 38: // Up arrow.
-        break;
-      case 39: // Right arrow.
-        break;
-      case 40: // Down arrow.
-        break;
-    }
+  } else if (event.charCode == 13 ||    // moz
+            (event.charCode == 0 && event.keyCode == 13 )) {  // webkit
+    // "Enter" key was pressed
+    toggleFS();
 
   } else {
     return;
@@ -542,6 +538,7 @@ function whileMouseDown(event) {
 
 function main() {
   document.addEventListener("mozfullscreenchange", fschange, false);
+  document.addEventListener("webkitfullscreenchange", fschange, false);
   window.addEventListener("keypress", onkey, true);
   window.addEventListener("keydown", onkeydown, true);
   init();
