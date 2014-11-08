@@ -94,6 +94,7 @@ document.addEventListener( 'mouseup', onDocumentMouseUp, false);
 var controls, effect;             // for Cardboard
 var clock = new THREE.Clock();
 var cardboardEnabled = false;
+var cardboardMoveForward = true;
 
 function init() {
 
@@ -251,8 +252,11 @@ function render() {
   renderer.enableScissorTest(true);
 
   if (cardboardEnabled) {
+
     // Move camera forward continuously.
-    moveCameraForward(-1);
+    if (cardboardMoveForward) {
+      moveCameraForward(-1);
+    }
 
     cardboardResize();  
     camera.updateProjectionMatrix();
@@ -495,6 +499,11 @@ function checkCollision(cameraPosition) {
 
 // Create timer to repeatedly call method while mouse is down.
 function onDocumentMouseDown(event) {
+
+  // Using mouse cancels the auto-move in cardboard mode.
+  if (cardboardEnabled && cardboardMoveForward) {
+    cardboardMoveForward = false;
+  }
 
   if(mouseDownIntervalID == -1) {  // Only create if none exists.
      // Pass event to the function so we know which button is clicked.
