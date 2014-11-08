@@ -343,6 +343,7 @@ function toggleVR() {
 }
 
 function toggleFS() {
+  console.log("in toggleFS")
   if (!vrHMD) {
     alert("no HMD found");
     return;
@@ -398,23 +399,10 @@ function onkey(event) {
     // Walk backwards
     moveCameraForward(MOVE_ON_KEY);
 
-  } else if (event.charCode == 0) {
-    
-    console.log("keycode", event.keyCode)
-    // Handle non-character keys
-    switch(event.keyCode) {
-      case 13: // Enter key
-        toggleFS();
-        break;
-      case 37: // Left arrow.
-        break;
-      case 38: // Up arrow.
-        break;
-      case 39: // Right arrow.
-        break;
-      case 40: // Down arrow.
-        break;
-    }
+  } else if (event.charCode == 13 ||    // moz
+            (event.charCode == 0 && event.keyCode == 13 )) {  // webkit
+    // "Enter" key was pressed
+    toggleFS();
 
   } else {
     return;
