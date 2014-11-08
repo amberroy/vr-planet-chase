@@ -1,3 +1,7 @@
+/* author: Vladimir Vukicevic 
+ * source: http://people.mozilla.org/~vladimir/vr/vrutils.js
+ * date:   27-Jul-2014
+ */
 function FovToNDCScaleOffset(fov)
 {
   var pxscale = 2.0 / (fov.leftTan + fov.rightTan);
