@@ -6,6 +6,8 @@
 
 // WebVR - this version of three.js has WebGL Renderer's setSize method
 // modified to take a canvas resolution scale factor, lines marked with WebVR.
+// by Vladimir Vukicevic, Mozilla, 27-Jul-2014
+// http://people.mozilla.org/~vladimir/vr/lib/three.js
 
 var THREE = { REVISION: '66' };
 
