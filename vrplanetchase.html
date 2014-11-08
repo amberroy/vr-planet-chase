@@ -41,8 +41,8 @@ body {
 </head>
 <body oncontextmenu="return false;">
   <table><tr>
-  <td><button onclick="toggleFS();"><h3>Enter VR Mode</h3></button></td>
-  <td><button onclick="toggleCardboard();"><h3>Cardboard Mode</h3></button></td>
+  <td><button onclick="launchVR();"><h3>Enter VR Mode</h3></button></td>
+  <td><button onclick="launchCardboard();"><h3>Cardboard Mode</h3></button></td>
   </tr></table>
   <div id="container">
     <div id="divL"></div>
@@ -87,14 +87,11 @@ var redSphereMaterial;
 var redSphereFoundMaterial; // When found, apply the new material.
 var collisionMaterial;      // Used for collision effect.
 
-document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-document.addEventListener( 'mousedown', onDocumentMouseDown, false);
-document.addEventListener( 'mouseup', onDocumentMouseUp, false);
-
 var controls, effect;             // for Cardboard
 var clock = new THREE.Clock();
 var cardboardEnabled = false;
 var cardboardMoveForward = true;
+
 
 function init() {
 
@@ -123,9 +120,8 @@ function init() {
 
 }
 
-function toggleCardboard() {
-  // Not really a toggle yet since we don't go back to normal mode.
-  // Google cardboard examples uses listeners instead of button toggle:
+function launchCardboard() {
+  // Google cardboard examples uses listeners instead of button:
   // window.addEventListener('deviceorientation', deviceorientation, true);
   // renderer.domElement.addEventListener('click', fullscreen, false);
 
@@ -135,19 +131,16 @@ function toggleCardboard() {
   controls.connect();
   controls.update();
 
-  cardboardFullscreen()
-  setTimeout(cardboardResize, 1);
-}
-
-function cardboardFullscreen() {
+  // Polyfill for entering fullscreen (without VR device).
+  // If successful, we'll get onFullScreenChange callback.
   if (container.requestFullscreen) {
     container.requestFullscreen();
-  } else if (container.msRequestFullscreen) {
-    container.msRequestFullscreen();
   } else if (container.mozRequestFullScreen) {
     container.mozRequestFullScreen();
   } else if (container.webkitRequestFullscreen) {
     container.webkitRequestFullscreen();
+  } else if (container.msRequestFullscreen) {
+    container.msRequestFullscreen();
   }
 }
 
@@ -238,7 +231,7 @@ function setRenderSize(width, height, vr) {
   renderHeight = height;
 }
 
-function onDocumentMouseMove(event) {
+function onMouseMove(event) {
   mouseX = ( event.clientX - windowHalfX ) * 10;
   mouseY = ( event.clientY - windowHalfY ) * 10;
 }
@@ -325,8 +318,8 @@ function vrDeviceCallback(vrdevs) {
   animate();
 }
 
-function toggleVR() {
-  // Used only for debugging, to force toggling VR rendering w/o fullscreen
+function launchDebugVR() {
+  // Used only for debugging, to force VR rendering w/o fullscreen
   if (!vrHMD) {
     alert("no HMD found");
     return;
@@ -346,13 +339,17 @@ function toggleVR() {
   vrHMD.xxxToggleElementVR(document.getElementById("three_canvas"));
 }
 
-function toggleFS() {
-  console.log("in toggleFS")
+function launchVR() {
+  // Here we only request fullscreen, so vrEnabled flag not flipped
+  // until we get the fullscreenchange callback.
+
   if (!vrHMD) {
     alert("no HMD found");
     return;
   }
 
+  // Polyfill for entering fullscreen with VR device.
+  // Only implemented on dev builds of Firefox and Chromium.
   if (container.mozRequestFullScreen) {
     container.mozRequestFullScreen({ vrDisplay: vrHMD });
   } else if (renderer.domElement.webkitRequestFullscreen) {
@@ -363,14 +360,19 @@ function toggleFS() {
   }
 }
 
-function fschange() {
+function onFullscreenChange() {
+  // Hanlder called when we enter or exit fullscreen mode.
+
   if (cardboardEnabled) {
+    cardboardResize();
     return;
   }
 
   // Appears the event document.webkitfullscreenchange is generated,
   // even when we call fullscreen on the renderer.domElement above.
-  if (document.mozFullScreenElement || document.webkitFullscreenElement) {
+  var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement;
+
+  if (fullscreenElement) {
     renderWidth = screen.availWidth / 2;
     renderHeight = screen.availHeight;
     vrEnabled = true;
@@ -383,17 +385,11 @@ function fschange() {
   setRenderSize(renderWidth, renderHeight, vrEnabled);
 }
 
-function onkey(event) {
+function onKeyPress(event) {
   var MOVE_ON_KEY = 25;
-  console.log("onKey", event.charCode)
+  console.log("onKeyPress", event.charCode)
 
-  if (event.charCode == 'f'.charCodeAt(0)) {
-    toggleFS();
-
-  } else if (event.charCode == 'v'.charCodeAt(0)) {
-    toggleVR();
-
-  } else if (event.charCode == 'w'.charCodeAt(0)) {
+  if (event.charCode == 'w'.charCodeAt(0)) {
 
     // Walk forward
     moveCameraForward(MOVE_ON_KEY * -1);
@@ -406,7 +402,7 @@ function onkey(event) {
   } else if (event.charCode == 13 ||    // moz
             (event.charCode == 0 && event.keyCode == 13 )) {  // webkit
     // "Enter" key was pressed
-    toggleFS();
+    launchVR();
 
   } else {
     return;
@@ -479,26 +475,26 @@ function checkCollision(cameraPosition) {
       var millis = 500;
       var blinks = 5;
       redSphere.material = redSphereFoundMaterial; 
-      isRedSphereFound = false;  // DEBUG
 
       // Reset the game.
       setTimeout(function() {
         // Create new group of spheres to navigate.
         scene.remove(spheresGroup);
         createSpheres();
+        isRedSphereFound = false;
         // We could reset camera here: camera.lookAt(scene.position)
       }, 2000);   // Wait a few seconds before restarting.
     }
   }
 
   if (isCollision) {
-    console.log("Collision detected");  // for debugging
+    console.log("Collision detected");
   }
   return isCollision;
 }
 
 // Create timer to repeatedly call method while mouse is down.
-function onDocumentMouseDown(event) {
+function onMouseDown(event) {
 
   // Using mouse cancels the auto-move in cardboard mode.
   if (cardboardEnabled && cardboardMoveForward) {
@@ -513,7 +509,7 @@ function onDocumentMouseDown(event) {
 }
 
 // When mouse button released, clear the timer.
-function onDocumentMouseUp(event) {
+function onMouseUp(event) {
    if(mouseDownIntervalID != -1) {  // Only clear if exists.
      clearInterval(mouseDownIntervalID);
      mouseDownIntervalID =- 1;
@@ -546,23 +542,30 @@ function whileMouseDown(event) {
 }
 
 function main() {
-  document.addEventListener("mozfullscreenchange", fschange, false);
-  document.addEventListener("webkitfullscreenchange", fschange, false);
-  window.addEventListener("keypress", onkey, true);
-  window.addEventListener("keydown", onkeydown, true);
+
+  // Initialize the scene.
   init();
   setRenderSize(renderWidth, renderHeight, false);
 
   // getVRDevices to check for attached HMDs.
-  if (navigator.getVRDevices)
+  if (navigator.getVRDevices) {
     navigator.getVRDevices().then(vrDeviceCallback);
-  else
+  } else {
     animate();
+  }
 
-  // HACK to ensure HMD is detected before going into VR rendering mode.
-  // Even with 0 timeout it gets called after vrDeviceCallback finishes. 
-  //setTimeout(toggleVR, 0);  // Uncomment to start in VR mode.
 }
+
+// Event handlers.
+document.addEventListener( 'mousemove', onMouseMove, false );
+document.addEventListener( 'mousedown', onMouseDown, false);
+document.addEventListener( 'mouseup', onMouseUp, false);
+
+document.addEventListener("fullscreenchange", onFullscreenChange, false);
+document.addEventListener("mozfullscreenchange", onFullscreenChange, false);
+document.addEventListener("webkitfullscreenchange", onFullscreenChange, false);
+
+window.addEventListener("keypress", onKeyPress, true);
 
 window.addEventListener("load", main, false);
 
