@@ -15,8 +15,8 @@ This simple but ground-breaking WebVR game is implemented using Javascript and r
 2. Desktop or Laptop computer running:
   - Windows or Mac OS
   - Oculus Runtime ([download from Oculus](https://developer.oculusvr.com/))
-  - VR-enabled build of Firefox Nightly ([download from Mozilla](http://blog.bitops.com/blog/2014/08/20/updated-firefox-vr-builds) v34)  
-  or Chromium ([download from Google](https://drive.google.com/folderview?id=0BzudLt22BqGRbW9WTHMtOWMzNjQ&usp=sharing#list) v30)
+  - VR-enabled build of Firefox Nightly ([download from Mozilla](https://wiki.mozilla.org/User:VladVukicevic/VRBuilds))  
+  or Chromium ([download from Google](https://drive.google.com/folderview?id=0BzudLt22BqGRbW9WTHMtOWMzNjQ&usp=sharing#list))
 
 #### Cardboard Mode
 1. VR Viewer ([buy from DodoCase](http://www.dodocase.com/products/google-cardboard-vr-goggle-toolkit))
