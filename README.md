@@ -37,6 +37,8 @@ This simple but ground-breaking WebVR game is implemented using Javascript and r
 > - You will move in the direction you are looking.
 > - **Cardboard Mode**: You will move forward automatically.  
 If you run into an asteroid, turn around to reverse course.
+> - Leap Motion</b>: Place one hand in front the the sensor  
+to move forward, two hands to move backwards.
      
 
 To start the game, click the "VR" button at the top-left of the page, or press the Enter key.  This will put your browser into full-screen VR mode, and you may need to click "Allow" to confirm.  Be sure your Oculus Rift DK2 is connected to your computer, or else you will get the "No HMD found" error message. Alternatively, tap the "Cardboard" button and insert your smartphone into the viewer.
