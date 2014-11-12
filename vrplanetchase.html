@@ -49,11 +49,18 @@ body {
     <div id="divR"></div>
   </div>
 
-  <!-- this version of three.js has WebGL Renderer's setSize method modified to take a canvas resolution scale factor -->
+  <!-- This version of three.js modified slightly, see notes at top of file. -->
   <script src="js/three.js"></script>
   <script src="js/vrutils.js"></script>
   <script src="js/DeviceOrientationControls.js"></script>
   <script src="js/StereoEffect.js"></script>
+
+  <!-- for Leap Motion support -->
+  <!-- same as http://js.leapmotion.com/leap-0.6.3.min.js -->
+  <script src="js/leap-0.6.3.min.js"></script>
+  <!-- Leap Motion plugin "transform" needed to flip axis for HMD mount. -->
+  <!-- This version of plugins modified slightly, see notes at top of file. -->
+  <script src="js/leap-plugins-0.1.9.js"></script>
 
 <script>
 
@@ -567,6 +574,39 @@ function cardboardResize() {
 }
 
 //---------------------------------------------------------------------------
+// LEAP MOTION
+//---------------------------------------------------------------------------
+
+function setupLeapController() {
+  // Connect to the Leap Motion controller, if one is present. 
+
+  var controllerOptions = {}; // none for now
+  var leapController = Leap.loop(controllerOptions, function(frame) {
+
+    var MOVE_ON_LEAP = 10;
+    leapMotionHandCount = frame.hands.length;
+    if (leapMotionHandCount === 1) {
+      // one hand: move forward
+      console.log("hand count:", leapMotionHandCount);
+      moveCameraForward(MOVE_ON_LEAP * -1);
+    } else if (leapMotionHandCount === 2) {
+      // two hands: move back
+      console.log("hand count:", leapMotionHandCount);
+      moveCameraForward(MOVE_ON_LEAP);
+    }
+  });
+
+  // Optimize for using with HMD mount.
+  Leap.loopController.use('transform', {vr: true});
+
+  // Unfortunately this returns true even when no controller connected.
+  //if (leapController.connected) {
+  //  console.log("Detected Leap Motion controller");
+  //}
+
+}
+
+//---------------------------------------------------------------------------
 // Main
 //---------------------------------------------------------------------------
 
@@ -574,6 +614,8 @@ function main() {
 
   initScene();
   setRenderSize(renderWidth, renderHeight, false);
+
+  setupLeapController();
 
   // getVRDevices to check for attached HMDs.
   if (navigator.getVRDevices) {
