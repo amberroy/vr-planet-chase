@@ -246,12 +246,12 @@ function onKeyPress(event) {
   if (event.charCode == 'w'.charCodeAt(0)) {
 
     // Walk forward
-    moveCameraForward(MOVE_ON_KEY * -1);
+    movePlayer(MOVE_ON_KEY * -1);
 
   } else if (event.charCode == 's'.charCodeAt(0)) {
 
     // Walk backwards
-    moveCameraForward(MOVE_ON_KEY);
+    movePlayer(MOVE_ON_KEY);
 
   } else if (event.charCode == 13 ||    // moz
             (event.charCode == 0 && event.keyCode == 13 )) {  // webkit
@@ -266,29 +266,30 @@ function onKeyPress(event) {
   event.stopPropagation();
 }
 
-function moveCameraForward(moveDistance) {
+function movePlayer(moveDistance) {
+
+  // In VR mode, either left or right camera works.
+  var newCamera = vrEnabled ? cameraLeft.clone() : camera.clone();
+  newCamera.translateZ(moveDistance);
+
+  // Don't let the player get too far from center of scene.
+  var sceneCenterPosition = (new THREE.Object3D()).position;  // Default position is zero.
+  var distance = newCamera.position.distanceTo(sceneCenterPosition);
+  console.log("distance from of scene", distance);
+  console.log("newCamera.position.z", newCamera.position.z);
+  console.log("moveDistance", moveDistance);
+  if (distance >= 1500) {
+    console.log("Movement stopped, too far from center of scene", distance);
+    return;
+  }
 
   // Check for collision using current camera, but move both
   // sets of cameras in case we toggle vrEnabled (although
   // we still don't end up in exactly the same place somehow).
-  if (vrEnabled) {
-
-    // Either left or right camera works.
-    var newCamera = cameraLeft.clone();   
-    newCamera.translateZ(moveDistance);
-    if (!checkCollision(newCamera.position)) {
-      cameraLeft.translateZ(moveDistance);
-      cameraRight.translateZ(moveDistance);
-      camera.translateZ(moveDistance);
-    }
-  } else {
-    var newCamera = camera.clone();   
-    newCamera.translateZ(moveDistance);
-    if (!checkCollision(newCamera.position)) {
-      cameraLeft.translateZ(moveDistance);
-      cameraRight.translateZ(moveDistance);
-      camera.translateZ(moveDistance);
-    }
+  if (!checkCollision(newCamera.position)) {
+    cameraLeft.translateZ(moveDistance);
+    cameraRight.translateZ(moveDistance);
+    camera.translateZ(moveDistance);
   }
 }
 
@@ -323,7 +324,7 @@ function whileMouseDown(event) {
   switch (event.which) {
     case 1:
       // left click: move forwards
-      moveCameraForward(MOVE_ON_CLICK);
+      movePlayer(MOVE_ON_CLICK);
       break;
     case 2:
       // middle click
@@ -331,7 +332,7 @@ function whileMouseDown(event) {
       break;
     case 3:
       // right click: move backwards
-      moveCameraForward(MOVE_ON_CLICK * -1);
+      movePlayer(MOVE_ON_CLICK * -1);
       break;
 
     default:  
@@ -390,7 +391,7 @@ function render() {
 
     // Move camera forward continuously.
     if (cardboardMoveForward) {
-      moveCameraForward(-1);
+      movePlayer(-1);
     }
 
     cardboardResize();  
@@ -585,11 +586,11 @@ function setupLeapController() {
     if (leapMotionHandCount === 1) {
       // one hand: move forward
       console.log("hand count:", leapMotionHandCount);
-      moveCameraForward(MOVE_ON_LEAP * -1);
+      movePlayer(MOVE_ON_LEAP * -1);
     } else if (leapMotionHandCount === 2) {
       // two hands: move back
       console.log("hand count:", leapMotionHandCount);
-      moveCameraForward(MOVE_ON_LEAP);
+      movePlayer(MOVE_ON_LEAP);
     }
   });
 
