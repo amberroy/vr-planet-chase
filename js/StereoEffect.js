@@ -1,3 +1,6 @@
+// this file downloaded on 10-18-2014
+// https://github.com/mrdoob/three.js/blob/master/examples/js/effects/StereoEffect.js
+// Modified to reset renderer.autoClear back to orignal value.  See XXX lines.
 /**
  * @author alteredq / http://alteredqualia.com/
  * @authod mrdoob / http://mrdoob.com/
@@ -23,7 +26,7 @@ THREE.StereoEffect = function ( renderer ) {
 
 	// initialization
 
-	renderer.autoClear = false;
+	// renderer.autoClear = false;	// XXX
 
 	this.setSize = function ( width, height ) {
 
@@ -67,6 +70,8 @@ THREE.StereoEffect = function ( renderer ) {
 		_cameraR.updateMatrixWorld();
 
 		//
+		var autoClear = renderer.autoClear;  // XXX
+	    renderer.autoClear = false;	// XXX
 
 		renderer.setViewport( 0, 0, _width * 2, _height );
 		renderer.clear();
@@ -77,6 +82,7 @@ THREE.StereoEffect = function ( renderer ) {
 		renderer.setViewport( _width, 0, _width, _height );
 		renderer.render( scene, _cameraR );
 
+	    renderer.autoClear = autoClear;	// XXX
 	};
 
 };
