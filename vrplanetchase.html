@@ -51,8 +51,9 @@ body {
   <script src="js/VREffect.js"></script>
   <script src="js/VRControls.js"></script>
   <!-- for rendering to Google Cardboard -->
-  <script src="js/DeviceOrientationControls.js"></script>
+  <!-- this version of StereoEffect modified slightly: reset renderer.autoClear -->
   <script src="js/StereoEffect.js"></script>
+  <script src="js/DeviceOrientationControls.js"></script>
 
   <!-- for Leap Motion controller -->
   <script src="http://js.leapmotion.com/leap-0.6.3.min.js"></script>
@@ -60,12 +61,16 @@ body {
 
 <script>
 
-var container;
+var modes = Object.freeze ({
+  noVR: "noVR",   // default when page is loaded
+  webVR: "webVR", // requires VR-enabled browser
+  cbVR: "cbVR"    // Google cardboard for Android
+});
+var renderMode = modes.noVR; 
 
 var camera, scene, renderer;
 
-var vrCamera, vrControls, vrEffect;
-var vrEffectEnabled = false;
+var vrControls, vrEffect;
 
 var geometry, gameObjects;
 
@@ -75,7 +80,6 @@ var winRenderHeight = winRenderWidth * (1080/1920); // window.innerHeight;
 var renderWidth = winRenderWidth;
 var renderHeight = winRenderHeight;
 
-var vrHMD = null, vrPosDev = null, vrEnabled = false;
 
 var mouseDownIntervalID = -1;
 var redPlanet;
@@ -87,10 +91,9 @@ var redPlanetMaterial;
 var redPlaentFoundMaterial;
 var asteroidCollisionMaterial;
 
-var controls, effect;             // for Cardboard
+var cbControls, cbEffect;             // for Cardboard
 var clock = new THREE.Clock();
-var cardboardEnabled = false;
-var cardboardMoveForward = true;
+var autoMoveForward = true;
 var iOS = ['iPad', 'iPhone', 'iPod'].indexOf(navigator.platform) >= 0;
 
 //---------------------------------------------------------------------------
@@ -99,8 +102,7 @@ var iOS = ['iPad', 'iPhone', 'iPod'].indexOf(navigator.platform) >= 0;
 
 function initScene() {
   // Initialize the scene with camera, light, and game objects.  
-
-  container = document.getElementById("container");
+  console.log("renderMode", renderMode)
 
   camera = new THREE.PerspectiveCamera( 60, renderWidth / renderHeight, 1, 10000 );
   camera.position.z = 500;
@@ -120,9 +122,15 @@ function initScene() {
   renderer.domElement.setAttribute("id", "three_canvas");
   container.appendChild( renderer.domElement );
 
+  // for web-VR
   vrEffect = new THREE.VREffect(renderer);
-  vrCamera = new THREE.PerspectiveCamera(60, renderWidth / renderHeight, 1, 10000);
-  vrControls = new THREE.VRControls(vrCamera);
+  vrControls = new THREE.VRControls(camera);
+
+  // for google cardboard VR
+  cbEffect = new THREE.StereoEffect(renderer);
+  cbControls = new THREE.DeviceOrientationControls(camera, true); 
+  cbControls.connect(); 
+  cbControls.update();
 }
 
 function createGameObjects() {
@@ -242,12 +250,12 @@ function onKeyPress(event) {
   if (event.charCode == 'w'.charCodeAt(0)) {
 
     // Walk forward
-    movePlayer(MOVE_ON_KEY * -1);
+    moveForward(MOVE_ON_KEY * -1);
 
   } else if (event.charCode == 's'.charCodeAt(0)) {
 
     // Walk backwards
-    movePlayer(MOVE_ON_KEY);
+    moveForward(MOVE_ON_KEY);
 
   } else if (event.charCode == 13 ||    // moz
             (event.charCode == 0 && event.keyCode == 13 )) {  // webkit
@@ -268,23 +276,21 @@ function onKeyPress(event) {
   event.stopPropagation();
 }
 
-function movePlayer(moveDistance) {
+function moveForward(moveDistance) {
 
-  var currentCamera = vrEnabled ? vrCamera : camera;
-  var movedCamera = currentCamera.clone();
-
+  var movedCamera = camera.clone();
   movedCamera.translateZ(moveDistance);
 
-  // Don't let the player get too far from center of scene.
+  // Don't let the camera get too far from center of scene.
   var sceneCenterPosition = (new THREE.Object3D()).position;  // Default position is zero.
-  var distance = movedCamera.position.distanceTo(sceneCenterPosition);
+  var distance = movedCamera.position.distanceTo(sceneCenterPosition); 
   if (distance >= 1500) {
     console.log("Movement stopped, too far from center of scene", distance);
     return;
   }
 
   if (!checkCollision(movedCamera.position)) {
-    currentCamera.translateZ(moveDistance);
+    camera.translateZ(moveDistance);
   }
 }
 
@@ -292,8 +298,8 @@ function onMouseDown(event) {
   // Create timer to repeatedly call method while mouse is down.
 
   // Using mouse cancels the auto-move in cardboard mode.
-  if (cardboardEnabled && cardboardMoveForward) {
-    cardboardMoveForward = false;
+  if (renderMode === modes.cbVR && autoMoveForward) {
+    autoMoveForward = false;
   }
 
   if(mouseDownIntervalID == -1) {  // Only create if none exists.
@@ -319,7 +325,7 @@ function whileMouseDown(event) {
   switch (event.which) {
     case 1:
       // left click: move forwards
-      movePlayer(MOVE_ON_CLICK);
+      moveForward(MOVE_ON_CLICK);
       break;
     case 2:
       // middle click
@@ -327,7 +333,7 @@ function whileMouseDown(event) {
       break;
     case 3:
       // right click: move backwards
-      movePlayer(MOVE_ON_CLICK * -1);
+      moveForward(MOVE_ON_CLICK * -1);
       break;
 
     default:  
@@ -346,33 +352,37 @@ function animate() {
 }
 
 function render() {
-  if (cardboardEnabled) {
 
-    // Move camera forward continuously.
-    if (cardboardMoveForward) {
-      movePlayer(-1);
-    }
+  switch(renderMode) {
 
-    controls.update(clock.getDelta);
-    // Render using stero effect.
-    effect.render(scene, camera);  
-    return;
-  }
+  case modes.noVR:
 
-  if (vrEnabled) {
-
-    if (vrEffectEnabled) {
-      vrControls.update();
-      vrEffect.render(scene, vrCamera);
-      return;
-    }
-  } else {
     renderer.render(scene, camera);
+    break;
+
+  case modes.webVR:
+
+    vrControls.update();
+    vrEffect.render(scene, camera);
+    break;
+
+  case modes.cbVR:
+
+    if (autoMoveForward) {
+      // Move camera forward continuously.
+      moveForward(-1);
+    }
+    cbControls.update(clock.getDelta);
+    cbEffect.render(scene, camera);  
+    break;
+
+  default:
+    console.log("Unrecognized render mode:", renderMode)
+
   }
 }
 
 function launchVR() {
-  vrEffectEnabled = true;
   vrEffect.setFullScreen(true);
 }
 
@@ -382,27 +392,19 @@ function onFullscreenChange() {
                           document.mozFullScreenElement || 
                           document.webkitFullscreenElement;
 
-  if (cardboardEnabled) {
+  if (renderMode === modes.cbVR) {
     if (fullscreenElement) {
       cardboardResize();
     } else {
-      cardboardEnabled = false;
-      var width = winRenderWidth;
-      var height = winRenderHeight;
-
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-
-      renderer.setSize(width, height);
+      exitCardboard();
     }
     return;
   }
 
   if (fullscreenElement) {
-    vrEnabled = true;
+    renderMode = modes.webVR;
   } else {
-    vrEnabled = false;
-    vrEffectEnabled = false;
+    renderMode = modes.noVR;
   }
 
 }
@@ -413,18 +415,18 @@ function onFullscreenChange() {
 //---------------------------------------------------------------------------
 
 function launchCardboard() {
-  // Google cardboard examples uses listeners instead of button:
-  // window.addEventListener('deviceorientation', deviceorientation, true);
-  // renderer.domElement.addEventListener('click', fullscreen, false);
+  // Allow cardboard mode on all devices for easier debugging.
+  // To limit to those with orientation sensors (phones, tables)
+  // we could listen for deviceorientaion event before enabling.
 
-  cardboardEnabled = true;
-  effect = new THREE.StereoEffect(renderer);  // Cardboard
-  controls = new THREE.DeviceOrientationControls(camera, true);
-  controls.connect();
-  controls.update();
+  renderMode = modes.cbVR;
 
   // Polyfill for entering fullscreen (without VR device).
   // If successful, we'll get onFullscreenChange callback.
+  // Google cardboard examples listen for deviceorientation
+  // window.addEventListener('deviceorientation', deviceorientation, true);
+  // renderer.domElement.addEventListener('click', fullscreen, false);
+  var container = document.getElementById("container");
   if (container.requestFullscreen) {
     container.requestFullscreen();
   } else if (container.mozRequestFullScreen) {
@@ -441,6 +443,17 @@ function launchCardboard() {
   }
 }
 
+function exitCardboard() {
+  var width = winRenderWidth;
+  var height = winRenderHeight;
+
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(width, height);
+  renderMode = modes.noVR;
+}
+
 function cardboardResize() {
   // If iOS we're not really running in fullscreen.
   var width = iOS ? window.innerWidth : screen.availWidth;
@@ -450,7 +463,7 @@ function cardboardResize() {
   camera.updateProjectionMatrix();
 
   renderer.setSize(width, height);
-  effect.setSize(width, height);
+  cbEffect.setSize(width, height);
 }
 
 function onOrientationChange() {
@@ -474,11 +487,11 @@ function setupLeapController() {
     if (leapMotionHandCount === 1) {
       // one hand: move forward
       console.log("hand count:", leapMotionHandCount);
-      movePlayer(MOVE_ON_LEAP * -1);
+      moveForward(MOVE_ON_LEAP * -1);
     } else if (leapMotionHandCount === 2) {
       // two hands: move back
       console.log("hand count:", leapMotionHandCount);
-      movePlayer(MOVE_ON_LEAP);
+      moveForward(MOVE_ON_LEAP);
     }
   });
 
@@ -505,7 +518,6 @@ function main() {
 }
 
 // Event handlers.
-//document.addEventListener( 'mousemove', onMouseMove, false );
 document.addEventListener( 'mousedown', onMouseDown, false);
 document.addEventListener( 'mouseup', onMouseUp, false);
 

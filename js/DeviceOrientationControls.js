@@ -1,3 +1,5 @@
+// this file downloaded on 10-18-2014
+// https://github.com/mrdoob/three.js/blob/master/examples/js/controls/DeviceOrientationControls.js
 /**
  * DeviceOrientationControls - applies device orientation on object rotation
  *
