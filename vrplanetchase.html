@@ -67,20 +67,15 @@ var modes = Object.freeze ({
   cbVR: "cbVR"    // Google cardboard for Android
 });
 var renderMode = modes.noVR; 
+var pendingMode = null;
 
 var camera, scene, renderer;
-
-var vrControls, vrEffect;
-
-var geometry, gameObjects;
-
 var winRenderWidth = 640; // window.innerWidth;
 var winRenderHeight = winRenderWidth * (1080/1920); // window.innerHeight;
-
 var renderWidth = winRenderWidth;
 var renderHeight = winRenderHeight;
 
-
+var gameObjects;
 var mouseDownIntervalID = -1;
 var redPlanet;
 var isRedPlanetFound = false;
@@ -91,7 +86,8 @@ var redPlanetMaterial;
 var redPlaentFoundMaterial;
 var asteroidCollisionMaterial;
 
-var cbControls, cbEffect;             // for Cardboard
+var vrControls, vrEffect;
+var cbControls, cbEffect;
 var clock = new THREE.Clock();
 var autoMoveForward = true;
 var iOS = ['iPad', 'iPhone', 'iPod'].indexOf(navigator.platform) >= 0;
@@ -102,7 +98,6 @@ var iOS = ['iPad', 'iPhone', 'iPod'].indexOf(navigator.platform) >= 0;
 
 function initScene() {
   // Initialize the scene with camera, light, and game objects.  
-  console.log("renderMode", renderMode)
 
   camera = new THREE.PerspectiveCamera( 60, renderWidth / renderHeight, 1, 10000 );
   camera.position.z = 500;
@@ -121,16 +116,6 @@ function initScene() {
   renderer.setSize(renderWidth, renderHeight);
   renderer.domElement.setAttribute("id", "three_canvas");
   container.appendChild( renderer.domElement );
-
-  // for web-VR
-  vrEffect = new THREE.VREffect(renderer);
-  vrControls = new THREE.VRControls(camera);
-
-  // for google cardboard VR
-  cbEffect = new THREE.StereoEffect(renderer);
-  cbControls = new THREE.DeviceOrientationControls(camera, true); 
-  cbControls.connect(); 
-  cbControls.update();
 }
 
 function createGameObjects() {
@@ -342,9 +327,48 @@ function whileMouseDown(event) {
 
 }
 
+function onLeapMotionFrame(frame) {
+
+  var move_on_leap = 10;
+  leapmotionhandcount = frame.hands.length;
+  if (leapmotionhandcount === 1) {
+    // one hand: move forward
+    console.log("hand count:", leapmotionhandcount);
+    moveforward(move_on_leap * -1);
+  } else if (leapmotionhandcount === 2) {
+    // two hands: move back
+    console.log("hand count:", leapmotionhandcount);
+    moveforward(move_on_leap);
+  }
+}
+
 //---------------------------------------------------------------------------
-// WebVR
+// VR Rendering
 //---------------------------------------------------------------------------
+
+function addVRControls() {
+
+  // for web-VR
+  vrEffect = new THREE.VREffect(renderer);
+  vrControls = new THREE.VRControls(camera);
+
+  // for google cardboard VR
+  cbEffect = new THREE.StereoEffect(renderer);
+  cbControls = new THREE.DeviceOrientationControls(camera, true); 
+  cbControls.connect(); 
+  cbControls.update();
+
+  // Connect to the Leap Motion controller, if one is present. 
+  var controllerOptions = {}; // none for now
+  var leapController = Leap.loop(controllerOptions, onLeapMotionFrame);
+  Leap.loopController.use('transform', {vr: true}); // Optimize for HMD mount.
+
+}
+
+function launchVR() {
+  pendingMode = modes.webVR;
+  vrEffect.setFullScreen(true);
+}
 
 function animate() {
   requestAnimationFrame(animate); 
@@ -382,9 +406,9 @@ function render() {
   }
 }
 
-function launchVR() {
-  vrEffect.setFullScreen(true);
-}
+//---------------------------------------------------------------------------
+// Fullscreen Management
+//---------------------------------------------------------------------------
 
 function onFullscreenChange() {
 
@@ -392,40 +416,32 @@ function onFullscreenChange() {
                           document.mozFullScreenElement || 
                           document.webkitFullscreenElement;
 
-  if (renderMode === modes.cbVR) {
-    if (fullscreenElement) {
-      cardboardResize();
-    } else {
+  if (fullscreenElement) {
+    if (pendingMode) {
+      renderMode = pendingMode;
+    }
+    if (renderMode === modes.cbVR) {
+      // Handle cardboard resizing ourself.
+      // For webVR, VREffect does it for us.
+      resizeCardboard();
+    }
+  } else {
+    if (renderMode === modes.cbVR) {
       exitCardboard();
     }
-    return;
-  }
-
-  if (fullscreenElement) {
-    renderMode = modes.webVR;
-  } else {
     renderMode = modes.noVR;
-  }
+  }                          
 
 }
-
-
-//---------------------------------------------------------------------------
-// Cardboard
-//---------------------------------------------------------------------------
 
 function launchCardboard() {
   // Allow cardboard mode on all devices for easier debugging.
   // To limit to those with orientation sensors (phones, tables)
   // we could listen for deviceorientaion event before enabling.
 
-  renderMode = modes.cbVR;
+  pendingMode = modes.cbVR;
 
-  // Polyfill for entering fullscreen (without VR device).
-  // If successful, we'll get onFullscreenChange callback.
-  // Google cardboard examples listen for deviceorientation
-  // window.addEventListener('deviceorientation', deviceorientation, true);
-  // renderer.domElement.addEventListener('click', fullscreen, false);
+  // Polyfill for entering fullscreen.
   var container = document.getElementById("container");
   if (container.requestFullscreen) {
     container.requestFullscreen();
@@ -439,11 +455,12 @@ function launchCardboard() {
 
   // Special case for iOS which doesn't allow fullscreen, fake it.
   if (iOS) {
-    cardboardResize();
+    resizeCardboard();
   }
 }
 
 function exitCardboard() {
+
   var width = winRenderWidth;
   var height = winRenderHeight;
 
@@ -451,10 +468,9 @@ function exitCardboard() {
   camera.updateProjectionMatrix();
 
   renderer.setSize(width, height);
-  renderMode = modes.noVR;
 }
 
-function cardboardResize() {
+function resizeCardboard() {
   // If iOS we're not really running in fullscreen.
   var width = iOS ? window.innerWidth : screen.availWidth;
   var height = iOS ? window.innerHeight : screen.availHeight;
@@ -467,42 +483,9 @@ function cardboardResize() {
 }
 
 function onOrientationChange() {
-  if (cardboardEnabled) {
-    cardboardResize();
+  if (renderMode === modes.cbVR) {
+    resizeCardboard();
   }
-}
-
-//---------------------------------------------------------------------------
-// LEAP MOTION
-//---------------------------------------------------------------------------
-
-function setupLeapController() {
-  // Connect to the Leap Motion controller, if one is present. 
-
-  var controllerOptions = {}; // none for now
-  var leapController = Leap.loop(controllerOptions, function(frame) {
-
-    var MOVE_ON_LEAP = 10;
-    leapMotionHandCount = frame.hands.length;
-    if (leapMotionHandCount === 1) {
-      // one hand: move forward
-      console.log("hand count:", leapMotionHandCount);
-      moveForward(MOVE_ON_LEAP * -1);
-    } else if (leapMotionHandCount === 2) {
-      // two hands: move back
-      console.log("hand count:", leapMotionHandCount);
-      moveForward(MOVE_ON_LEAP);
-    }
-  });
-
-  // Optimize for using with HMD mount.
-  Leap.loopController.use('transform', {vr: true});
-
-  // Unfortunately this returns true even when no controller connected.
-  //if (leapController.connected) {
-  //  console.log("Detected Leap Motion controller");
-  //}
-
 }
 
 //---------------------------------------------------------------------------
@@ -512,7 +495,7 @@ function setupLeapController() {
 function main() {
 
   initScene();
-  setupLeapController();
+  addVRControls();
   animate();
 
 }
