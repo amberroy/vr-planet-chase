@@ -15,10 +15,7 @@ body {
   overflow:hidden;
 }
 #container {
-  /* This works better for cardboard */
-  /*position: absolute; */
-  /* top: 50px;  */
-  /* left: 50px; */
+  /* no styling yet */
 }
 
 #divL, #divR {
@@ -49,13 +46,15 @@ body {
     <div id="divR"></div>
   </div>
 
-  <!-- This version of three.js modified slightly, see notes at top of file. -->
-  <script src="js/three.js"></script>
-  <script src="js/vrutils.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/three.js/r69/three.min.js"></script>
+  <!-- for rendering to Oculus Rift -->
+  <script src="js/VREffect.js"></script>
+  <script src="js/VRControls.js"></script>
+  <!-- for rendering to Google Cardboard -->
   <script src="js/DeviceOrientationControls.js"></script>
   <script src="js/StereoEffect.js"></script>
 
-  <!-- For Leap Motion support. Some plugins require a newer version of three.js -->
+  <!-- for Leap Motion controller -->
   <script src="http://js.leapmotion.com/leap-0.6.3.min.js"></script>
   <script src="http://js.leapmotion.com/leap-plugins-0.1.9.min.js"></script>
 
@@ -64,20 +63,17 @@ body {
 var container;
 
 var camera, scene, renderer;
-var cameraLeft, cameraRight;
+
+var vrCamera, vrControls, vrEffect;
+var vrEffectEnabled = false;
 
 var geometry, gameObjects;
-
-var mouseX = 0, mouseY = 0;
 
 var winRenderWidth = 640; // window.innerWidth;
 var winRenderHeight = winRenderWidth * (1080/1920); // window.innerHeight;
 
 var renderWidth = winRenderWidth;
 var renderHeight = winRenderHeight;
-
-var windowHalfX = window.innerWidth / 2;
-var windowHalfY = window.innerHeight / 2;
 
 var vrHMD = null, vrPosDev = null, vrEnabled = false;
 
@@ -95,7 +91,7 @@ var controls, effect;             // for Cardboard
 var clock = new THREE.Clock();
 var cardboardEnabled = false;
 var cardboardMoveForward = true;
-
+var iOS = ['iPad', 'iPhone', 'iPod'].indexOf(navigator.platform) >= 0;
 
 //---------------------------------------------------------------------------
 // Game Objects
@@ -109,9 +105,6 @@ function initScene() {
   camera = new THREE.PerspectiveCamera( 60, renderWidth / renderHeight, 1, 10000 );
   camera.position.z = 500;
 
-  cameraLeft = new THREE.Camera();
-  cameraRight = new THREE.Camera();
-
   scene = new THREE.Scene();
 
   // Need light source with phong material, otherwise spheres look black.
@@ -121,12 +114,15 @@ function initScene() {
 
   createGameObjects();
 
-  renderer = new THREE.WebGLRenderer();
-  renderer.setClearColor( 0xffffff );
+  renderer = new THREE.WebGLRenderer( { alpha: true } );
+  renderer.setClearColor( 0xffffff ); 
   renderer.setSize(renderWidth, renderHeight);
   renderer.domElement.setAttribute("id", "three_canvas");
   container.appendChild( renderer.domElement );
 
+  vrEffect = new THREE.VREffect(renderer);
+  vrCamera = new THREE.PerspectiveCamera(60, renderWidth / renderHeight, 1, 10000);
+  vrControls = new THREE.VRControls(vrCamera);
 }
 
 function createGameObjects() {
@@ -190,7 +186,7 @@ function checkCollision(cameraPosition) {
   for (var i = 0; i < asteroidsArray.length; i++) {
     var sphere = asteroidsArray[i];
     var distance = cameraPosition.distanceTo(sphere.position);
-    if (distance < sphere.geometry.radius + asteroidBuffer) {
+    if (distance < sphere.geometry.boundingSphere.radius + asteroidBuffer) {
       isCollision = true;
       console.log("Collision with sphere", i, "radius", sphere.geometry.radius);
       console.log("camera position", cameraPosition);
@@ -207,9 +203,9 @@ function checkCollision(cameraPosition) {
 
   // For red planet, detect collision when in the buffer zone, before camera
   // collides, so player can see the planet color change.
-  var distanceToRedPlanet = cameraPosition.distanceTo(redPlanet.position);
-  var redPlanetBuffer = redPlanet.geometry.radius * 4;
-  if (distanceToRedPlanet < redPlanet.geometry.radius + redPlanetBuffer) {
+  var distance = cameraPosition.distanceTo(redPlanet.position);
+  var redPlanetBuffer = redPlanet.geometry.boundingSphere.radius * 4;
+  if (distance < redPlanet.geometry.boundingSphere.radius + redPlanetBuffer) {
     isCollision = true;
     if (!isRedPlanetFound) {
 
@@ -258,6 +254,12 @@ function onKeyPress(event) {
     // "Enter" key was pressed
     launchVR();
 
+  } else if (event.key === 'f') {
+    launchVR();
+
+  } else if (event.key === 'z') {
+    vrControls.zeroSensor();
+
   } else {
     return;
   }
@@ -268,28 +270,21 @@ function onKeyPress(event) {
 
 function movePlayer(moveDistance) {
 
-  // In VR mode, either left or right camera works.
-  var newCamera = vrEnabled ? cameraLeft.clone() : camera.clone();
-  newCamera.translateZ(moveDistance);
+  var currentCamera = vrEnabled ? vrCamera : camera;
+  var movedCamera = currentCamera.clone();
+
+  movedCamera.translateZ(moveDistance);
 
   // Don't let the player get too far from center of scene.
   var sceneCenterPosition = (new THREE.Object3D()).position;  // Default position is zero.
-  var distance = newCamera.position.distanceTo(sceneCenterPosition);
-  console.log("distance from of scene", distance);
-  console.log("newCamera.position.z", newCamera.position.z);
-  console.log("moveDistance", moveDistance);
+  var distance = movedCamera.position.distanceTo(sceneCenterPosition);
   if (distance >= 1500) {
     console.log("Movement stopped, too far from center of scene", distance);
     return;
   }
 
-  // Check for collision using current camera, but move both
-  // sets of cameras in case we toggle vrEnabled (although
-  // we still don't end up in exactly the same place somehow).
-  if (!checkCollision(newCamera.position)) {
-    cameraLeft.translateZ(moveDistance);
-    cameraRight.translateZ(moveDistance);
-    camera.translateZ(moveDistance);
+  if (!checkCollision(movedCamera.position)) {
+    currentCamera.translateZ(moveDistance);
   }
 }
 
@@ -345,48 +340,12 @@ function whileMouseDown(event) {
 // WebVR
 //---------------------------------------------------------------------------
 
-function vrDeviceCallback(vrdevs) {
-
-  // First, find a HMD -- just use the first one we find
-  for (var i = 0; i < vrdevs.length; ++i) {
-    //console.log(vrdevs[i]);
-    if (vrdevs[i] instanceof HMDVRDevice) {
-      vrHMD = vrdevs[i];
-      console.log('Using HMD:', vrHMD.deviceName);
-      break;
-    }
-  }
-
-  if (!vrHMD)
-   return;
-
-  // Then, find that HMD's position sensor
-  for (var i = 0; i < vrdevs.length; ++i) {
-    if (vrdevs[i] instanceof PositionSensorVRDevice &&
-        vrdevs[i].hardwareUnitId == vrHMD.hardwareUnitId)
-    {
-      vrPosDev = vrdevs[i];
-      console.log('Using Sensor:', vrPosDev.deviceName);
-      break;
-    }
-  }
-
-  if (!vrPosDev) {
-    alert("Found a HMD, but didn't find its orientation sensor?");
-  }
-
-  // kick off rendering
-  animate();
-}
-
 function animate() {
-  requestAnimationFrame(animate);
+  requestAnimationFrame(animate); 
   render();
 }
 
 function render() {
-  renderer.enableScissorTest(true);
-
   if (cardboardEnabled) {
 
     // Move camera forward continuously.
@@ -394,141 +353,58 @@ function render() {
       movePlayer(-1);
     }
 
-    cardboardResize();  
-    camera.updateProjectionMatrix();
     controls.update(clock.getDelta);
-
     // Render using stero effect.
     effect.render(scene, camera);  
     return;
   }
 
   if (vrEnabled) {
-    // read the orientation from the HMD, and set the rotation on both cameras
-    var state = vrPosDev.getState();
-    var qrot = new THREE.Quaternion();
-    qrot.set(state.orientation.x, state.orientation.y, state.orientation.z, state.orientation.w);
-    cameraLeft.setRotationFromQuaternion(qrot);
-    cameraRight.setRotationFromQuaternion(qrot);
 
-    // render left eye
-    renderer.setViewport(0, 0, renderWidth, renderHeight);
-    renderer.setScissor(0, 0, renderWidth, renderHeight);
-    renderer.render(scene, cameraLeft);
-
-    // render right eye
-    renderer.setViewport(renderWidth, 0, renderWidth, renderHeight);
-    renderer.setScissor(renderWidth, 0, renderWidth, renderHeight);
-    renderer.render(scene, cameraRight);
+    if (vrEffectEnabled) {
+      vrControls.update();
+      vrEffect.render(scene, vrCamera);
+      return;
+    }
   } else {
-    renderer.setViewport(0, 0, renderWidth, renderHeight);
-    renderer.setScissor(0, 0, renderWidth, renderHeight);
     renderer.render(scene, camera);
   }
 }
 
-function setRenderSize(width, height, vr) {
-  // these are only used for mouse handling
-  windowHalfX = window.innerWidth / 2;
-  windowHalfY = window.innerHeight / 2;
-
-  if (vr) {
-    cameraLeft.projectionMatrix = FovToProjection(vrHMD.getRecommendedEyeFieldOfView("left"));
-    cameraRight.projectionMatrix = FovToProjection(vrHMD.getRecommendedEyeFieldOfView("right"));
-
-    var leftTx = vrHMD.getEyeTranslation("left");
-    var rightTx = vrHMD.getEyeTranslation("right");
-
-    cameraLeft.position.add(new THREE.Vector3(leftTx.x, leftTx.y, leftTx.z));
-    cameraRight.position.add(new THREE.Vector3(rightTx.x, rightTx.y, rightTx.z));
-
-    renderer.setSize(width * 2, height, true, 2);
-    container.style.width = (width * 2) + "px";
-    container.style.height = height + "px";
-  } else {
-    camera.aspect = renderWidth / renderHeight;
-    camera.updateProjectionMatrix();
-
-    renderer.setSize(width, height);
-    container.style.width = width + "px";
-    container.style.height = height + "px";
-  }
-
-  renderWidth = width;
-  renderHeight = height;
-}
-
-function onMouseMove(event) {
-  // Not used right now.
-  mouseX = ( event.clientX - windowHalfX ) * 10;
-  mouseY = ( event.clientY - windowHalfY ) * 10;
-}
-
 function launchVR() {
-  // Here we only request fullscreen, so vrEnabled flag not flipped
-  // until we get the fullscreenchange callback.
-
-  if (!vrHMD) {
-    alert("no HMD found");
-    return;
-  }
-
-  // Polyfill for entering fullscreen with VR device.
-  // Only implemented on dev builds of Firefox and Chromium.
-  if (container.mozRequestFullScreen) {
-    container.mozRequestFullScreen({ vrDisplay: vrHMD });
-  } else if (renderer.domElement.webkitRequestFullscreen) {
-    // Doesn't work on VR-enabled Chrome if we call it on container.
-    renderer.domElement.webkitRequestFullscreen({ vrDisplay: vrHMD });
-  } else {
-    alert("Full Screen VR not supported on this browser")
-  }
-}
-
-function launchDebugVR() {
-  // Used only for debugging, to force VR rendering w/o fullscreen
-  if (!vrHMD) {
-    alert("no HMD found");
-    return;
-  }
-
-  vrEnabled = !vrEnabled;
-
-  // Assume browser is running in full-screen mode.
-  // On Firefox, use Cmd-Shift-F on Mac. Hide toolbars with this addon:
-  // https://addons.mozilla.org/en-us/firefox/addon/old-lion-fullscreen
-  if (vrEnabled) {
-    renderWidth = screen.availWidth / 2;
-    renderHeight = screen.availHeight;
-  }
-
-  setRenderSize(renderWidth, renderHeight, vrEnabled);
-  vrHMD.xxxToggleElementVR(document.getElementById("three_canvas"));
+  vrEffectEnabled = true;
+  vrEffect.setFullScreen(true);
 }
 
 function onFullscreenChange() {
-  // Hanlder called when we enter or exit fullscreen mode.
+
+  var fullscreenElement = document.fullscreenElement || 
+                          document.mozFullScreenElement || 
+                          document.webkitFullscreenElement;
 
   if (cardboardEnabled) {
-    cardboardResize();
+    if (fullscreenElement) {
+      cardboardResize();
+    } else {
+      cardboardEnabled = false;
+      var width = winRenderWidth;
+      var height = winRenderHeight;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(width, height);
+    }
     return;
   }
 
-  // Appears the event document.webkitfullscreenchange is generated,
-  // even when we call fullscreen on the renderer.domElement above.
-  var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement;
-
   if (fullscreenElement) {
-    renderWidth = screen.availWidth / 2;
-    renderHeight = screen.availHeight;
     vrEnabled = true;
   } else {
-    renderWidth = winRenderWidth;
-    renderHeight = winRenderHeight;
     vrEnabled = false;
+    vrEffectEnabled = false;
   }
 
-  setRenderSize(renderWidth, renderHeight, vrEnabled);
 }
 
 
@@ -548,7 +424,7 @@ function launchCardboard() {
   controls.update();
 
   // Polyfill for entering fullscreen (without VR device).
-  // If successful, we'll get onFullScreenChange callback.
+  // If successful, we'll get onFullscreenChange callback.
   if (container.requestFullscreen) {
     container.requestFullscreen();
   } else if (container.mozRequestFullScreen) {
@@ -558,17 +434,29 @@ function launchCardboard() {
   } else if (container.msRequestFullscreen) {
     container.msRequestFullscreen();
   }
+
+  // Special case for iOS which doesn't allow fullscreen, fake it.
+  if (iOS) {
+    cardboardResize();
+  }
 }
 
 function cardboardResize() {
-  var width = container.offsetWidth;
-  var height = container.offsetHeight;
+  // If iOS we're not really running in fullscreen.
+  var width = iOS ? window.innerWidth : screen.availWidth;
+  var height = iOS ? window.innerHeight : screen.availHeight;
 
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
 
   renderer.setSize(width, height);
   effect.setSize(width, height);
+}
+
+function onOrientationChange() {
+  if (cardboardEnabled) {
+    cardboardResize();
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -611,27 +499,21 @@ function setupLeapController() {
 function main() {
 
   initScene();
-  setRenderSize(renderWidth, renderHeight, false);
-
   setupLeapController();
-
-  // getVRDevices to check for attached HMDs.
-  if (navigator.getVRDevices) {
-    navigator.getVRDevices().then(vrDeviceCallback);
-  } else {
-    animate();
-  }
+  animate();
 
 }
 
 // Event handlers.
-document.addEventListener( 'mousemove', onMouseMove, false );
+//document.addEventListener( 'mousemove', onMouseMove, false );
 document.addEventListener( 'mousedown', onMouseDown, false);
 document.addEventListener( 'mouseup', onMouseUp, false);
 
 document.addEventListener("fullscreenchange", onFullscreenChange, false);
 document.addEventListener("mozfullscreenchange", onFullscreenChange, false);
 document.addEventListener("webkitfullscreenchange", onFullscreenChange, false);
+
+window.addEventListener('orientationchange', onOrientationChange)
 
 window.addEventListener("keypress", onKeyPress, true);
 
