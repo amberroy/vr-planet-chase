@@ -1,5 +1,6 @@
 // this file downloaded on 2014-11-14
 // https://github.com/mrdoob/three.js/blob/master/examples/js/controls/VRControls.js
+// Modifed to disable positional tracking, see XXX lines.
 /**
  * @author dmarcos / https://github.com/dmarcos
  * @author mrdoob / http://mrdoob.com
@@ -54,11 +55,16 @@ THREE.VRControls = function ( object, callback ) {
 
 		}
 
+		// XXX Camera position is getting reset below, changes in my moveForward() not applied.
+		// XXX Only showed up on Chromium since state.position always set, event without camera.
+		// XXX Disable positional tracking, until I figure out how to move the camera manually.
+		/*
 		if ( state.position !== null ) {
 
 			object.position.copy( state.position );
 
 		}
+		*/
 
 	};
 
