@@ -1,50 +1,24 @@
 
 <!DOCTYPE html>
 <!-- Copyright (c) 2014 Amber Roy -->
+<!-- For more info see homepage at http://VRplanetchase.com -->
 <html lang="en">
 <head>
-    <title>VR Planet Chase - WebVR Game</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <title>VR Planet Chase - WebVR Game</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 <style>
-body {
-  background:#fff;
-  padding:0;
-  margin:0;
-  font-weight: bold;
-  overflow:hidden;
-}
-#container {
-  /* no styling yet */
-}
-
-#divL, #divR {
-  display: none;
-
-  position: absolute;
-  width: 50px; height: 50px;
-  background: blue;
-  border: 4px solid red;
-}
-
-#divL {
-  top: calc(50% - 27px); left: calc(25% - 27px);
-}
-
-#divR {
-  top: calc(50% - 27px); left: calc(75% - 27px);
-}
+  body {
+    background:#fff;
+    padding:0;
+    margin:0;
+    font-weight: bold;
+    overflow:hidden;
+  }
+  #container {
+    /* no styling yet */
+  }
 </style>
-</head>
-<body oncontextmenu="return false;">
-  <table><tr>
-  <td><button onclick="launchVR();"><h3>Enter VR Mode</h3></button></td>
-  <td><button onclick="launchCardboard();"><h3>Cardboard Mode</h3></button></td>
-  </tr></table>
-  <div id="container">
-    <div id="divL"></div>
-    <div id="divR"></div>
-  </div>
 
   <script src="//cdnjs.cloudflare.com/ajax/libs/three.js/r69/three.min.js"></script>
   <!-- for rendering to Oculus Rift -->
@@ -58,6 +32,17 @@ body {
   <!-- for Leap Motion controller -->
   <script src="http://js.leapmotion.com/leap-0.6.3.min.js"></script>
   <script src="http://js.leapmotion.com/leap-plugins-0.1.9.min.js"></script>
+
+</head>
+
+<body oncontextmenu="return false;">
+  <table><tr>
+  <td><button onclick="launchVR();"><h3>Enter VR Mode</h3></button></td>
+  <td><button onclick="launchCardboard();"><h3>Cardboard Mode</h3></button></td>
+  </tr></table>
+  <div id="container">
+  </div>
+</body>
 
 <script>
 
@@ -334,11 +319,11 @@ function onLeapMotionFrame(frame) {
   if (leapmotionhandcount === 1) {
     // one hand: move forward
     console.log("hand count:", leapmotionhandcount);
-    moveforward(move_on_leap * -1);
+    moveForward(move_on_leap * -1);
   } else if (leapmotionhandcount === 2) {
     // two hands: move back
     console.log("hand count:", leapmotionhandcount);
-    moveforward(move_on_leap);
+    moveForward(move_on_leap);
   }
 }
 
@@ -515,5 +500,4 @@ window.addEventListener("keypress", onKeyPress, true);
 window.addEventListener("load", main, false);
 
 </script>
-</body>
 </html>
