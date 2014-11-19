@@ -77,6 +77,8 @@ var clock = new THREE.Clock();
 var autoMoveForward = true;
 var iOS = ['iPad', 'iPhone', 'iPod'].indexOf(navigator.platform) >= 0;
 
+var headPosition = new THREE.Vector3(0,0,0);
+
 //---------------------------------------------------------------------------
 // Game Objects
 //---------------------------------------------------------------------------
@@ -371,8 +373,17 @@ function render() {
 
   case modes.webVR:
 
-    vrControls.update();
-    vrEffect.render(scene, camera);
+    var cameraPosition = camera.position.clone();
+    var lastHeadPosition = headPosition;
+    vrControls.update();  // Resets camera to absolute head position.
+    headPosition = camera.position.clone();
+    if (!headPosition.equals(cameraPosition)) {
+      // Add any head movement (via positional tracking) to the camera position.
+      camera.position.set(cameraPosition.x + (headPosition.x - lastHeadPosition.x),
+                          cameraPosition.y + (headPosition.y - lastHeadPosition.y),
+                          cameraPosition.z + (headPosition.z - lastHeadPosition.z));
+    }
+    vrEffect.render(scene, camera);  
     break;
 
   case modes.cbVR:
@@ -421,8 +432,6 @@ function onFullscreenChange() {
 
 function launchCardboard() {
   // Allow cardboard mode on all devices for easier debugging.
-  // To limit to those with orientation sensors (phones, tables)
-  // we could listen for deviceorientaion event before enabling.
 
   pendingMode = modes.cbVR;
 
@@ -493,7 +502,7 @@ document.addEventListener("fullscreenchange", onFullscreenChange, false);
 document.addEventListener("mozfullscreenchange", onFullscreenChange, false);
 document.addEventListener("webkitfullscreenchange", onFullscreenChange, false);
 
-window.addEventListener('orientationchange', onOrientationChange)
+window.addEventListener('orientationchange', onOrientationChange);
 
 window.addEventListener("keypress", onKeyPress, true);
 
