@@ -77,7 +77,8 @@ var clock = new THREE.Clock();
 var autoMoveForward = true;
 var iOS = ['iPad', 'iPhone', 'iPod'].indexOf(navigator.platform) >= 0;
 
-var headPosition = new THREE.Vector3(0,0,0);
+var ZERO_VECTOR3 = Object.freeze(new THREE.Vector3(0,0,0));
+var headPosition = ZERO_VECTOR3;
 
 //---------------------------------------------------------------------------
 // Game Objects
@@ -217,35 +218,35 @@ function checkCollision(cameraPosition) {
 
 function onKeyPress(event) {
   var MOVE_ON_KEY = 25;
-  console.log("onKeyPress", event.charCode)
+  console.log("onKeyPress", event.which)
 
-  if (event.charCode == 'w'.charCodeAt(0)) {
+  switch (event.which) {
 
+  case 'w'.charCodeAt(0):
     // Walk forward
     moveForward(MOVE_ON_KEY * -1);
+    break;
 
-  } else if (event.charCode == 's'.charCodeAt(0)) {
-
+  case 's'.charCodeAt(0):
     // Walk backwards
     moveForward(MOVE_ON_KEY);
+    break;
 
-  } else if (event.charCode == 13 ||    // moz
-            (event.charCode == 0 && event.keyCode == 13 )) {  // webkit
+  case 13:
     // "Enter" key was pressed
     launchVR();
+    break;
 
-  } else if (event.key === 'f') {
+  case 'f'.charCodeAt(0):
     launchVR();
+    break;
 
-  } else if (event.key === 'z') {
+  case 'z'.charCodeAt(0):
     vrControls.zeroSensor();
+    break;
 
-  } else {
-    return;
   }
 
-  event.preventDefault();
-  event.stopPropagation();
 }
 
 function moveForward(moveDistance) {
@@ -254,7 +255,7 @@ function moveForward(moveDistance) {
   movedCamera.translateZ(moveDistance);
 
   // Don't let the camera get too far from center of scene.
-  var sceneCenterPosition = (new THREE.Object3D()).position;  // Default position is zero.
+  var sceneCenterPosition = ZERO_VECTOR3; 
   var distance = movedCamera.position.distanceTo(sceneCenterPosition); 
   if (distance >= 1500) {
     console.log("Movement stopped, too far from center of scene", distance);
@@ -375,14 +376,16 @@ function render() {
 
     var cameraPosition = camera.position.clone();
     var lastHeadPosition = headPosition;
-    vrControls.update();  // Resets camera to absolute head position.
+    vrControls.update();  // Resets camera to absolute head position from HMD.
     headPosition = camera.position.clone();
-    if (!headPosition.equals(cameraPosition)) {
-      // Add any head movement (via positional tracking) to the camera position.
-      camera.position.set(cameraPosition.x + (headPosition.x - lastHeadPosition.x),
-                          cameraPosition.y + (headPosition.y - lastHeadPosition.y),
-                          cameraPosition.z + (headPosition.z - lastHeadPosition.z));
+    if (headPosition.equals(cameraPosition)) {
+      // On Firefox, if no HMD position data, then camera is not reset. Force to zero.
+      headPosition = ZERO_VECTOR3;
     }
+    // Add any head movement (via positional tracking) to the camera position.
+    camera.position.set(cameraPosition.x + (headPosition.x - lastHeadPosition.x),
+                        cameraPosition.y + (headPosition.y - lastHeadPosition.y),
+                        cameraPosition.z + (headPosition.z - lastHeadPosition.z));
     vrEffect.render(scene, camera);  
     break;
 
