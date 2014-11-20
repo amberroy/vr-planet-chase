@@ -390,10 +390,11 @@ function render() {
     break;
 
   case modes.cbVR:
+    var MOVE_ON_AUTO = -2;
 
     if (autoMoveForward) {
       // Move camera forward continuously.
-      moveForward(-1);
+      moveForward(MOVE_ON_AUTO);
     }
     cbControls.update(clock.getDelta);
     cbEffect.render(scene, camera);  
