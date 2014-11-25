@@ -16,7 +16,8 @@
     overflow:hidden;
   }
   #container {
-    /* no styling yet */
+    /* Set width and height in javascript below.   */
+    /* See nonFullscreenWidth, nonFullscreenHeight */
   }
 </style>
 
@@ -55,10 +56,12 @@ var renderMode = modes.noVR;
 var pendingMode = null;
 
 var camera, scene, renderer;
-var winRenderWidth = 640; // window.innerWidth;
-var winRenderHeight = winRenderWidth * (1080/1920); // window.innerHeight;
-var renderWidth = winRenderWidth;
-var renderHeight = winRenderHeight;
+
+// In non-VR mode, use small window instead of full window.innerWidth/Height.
+var nonFullscreenWidth = 640;
+var nonFullscreenHeight = nonFullscreenWidth * (1080/1920);
+var renderWidth = nonFullscreenWidth;
+var renderHeight = nonFullscreenHeight;
 
 var gameObjects;
 var mouseDownIntervalID = -1;
@@ -79,6 +82,9 @@ var iOS = ['iPad', 'iPhone', 'iPod'].indexOf(navigator.platform) >= 0;
 
 var ZERO_VECTOR3 = Object.freeze(new THREE.Vector3(0,0,0));
 var headPosition = ZERO_VECTOR3;
+var headRotationX = 0;
+var headRotationY = 0;
+var headRotationZ = 0;
 
 //---------------------------------------------------------------------------
 // Game Objects
@@ -218,7 +224,7 @@ function checkCollision(cameraPosition) {
 
 function onKeyPress(event) {
   var MOVE_ON_KEY = 25;
-  console.log("onKeyPress", event.which)
+  console.log("keypress", event.which)
 
   switch (event.which) {
 
@@ -243,6 +249,35 @@ function onKeyPress(event) {
 
   case 'z'.charCodeAt(0):
     vrControls.zeroSensor();
+    break;
+  }    
+
+}
+
+function onKeyDown(event) {
+  // Keypress not called on arrow keys, handle them here.
+  var ROTATE_ANGLE = 10 * (Math.PI / 180);
+
+  switch (event.which) {
+
+  case 37:  // LEFT arrow 
+    console.log("keydown LEFT");
+    camera.rotateOnAxis( new THREE.Vector3(0,1,0), ROTATE_ANGLE);
+    break;
+
+  case 39:  // RIGHT arrow 
+    console.log("keydown RIGHT");
+    camera.rotateOnAxis( new THREE.Vector3(0,1,0), ROTATE_ANGLE * -1);
+    break;
+
+  case 38:  // UP arrow 
+    console.log("keydown UP");
+    camera.rotateOnAxis( new THREE.Vector3(1,0,0), ROTATE_ANGLE);
+    break;
+
+  case 40:  // DOWN arrow 
+    console.log("keydown DOWN");
+    camera.rotateOnAxis( new THREE.Vector3(1,0,0), ROTATE_ANGLE * -1);
     break;
 
   }
@@ -270,9 +305,9 @@ function moveForward(moveDistance) {
 function onMouseDown(event) {
   // Create timer to repeatedly call method while mouse is down.
 
-  // Using mouse cancels the auto-move in cardboard mode.
-  if (renderMode === modes.cbVR && autoMoveForward) {
-    autoMoveForward = false;
+  // Tapping screen toggles the auto-move in cardboard mode.
+  if (renderMode === modes.cbVR) {
+    autoMoveForward = !autoMoveForward;
   }
 
   if(mouseDownIntervalID == -1) {  // Only create if none exists.
@@ -376,16 +411,35 @@ function render() {
 
     var cameraPosition = camera.position.clone();
     var lastHeadPosition = headPosition;
+
+    var rotationX = camera.rotation.x;
+    var rotationY = camera.rotation.y;
+    var rotationZ = camera.rotation.z;
+    var lastRotationX = headRotationX;
+    var lastRotationY = headRotationY;
+    var lastRotationZ = headRotationZ;
+
     vrControls.update();  // Resets camera to absolute head position from HMD.
+
     headPosition = camera.position.clone();
+    headRotationX = camera.rotation.x;
+    headRotationY = camera.rotation.y;
+    headRotationZ = camera.rotation.z;
+
     if (headPosition.equals(cameraPosition)) {
-      // On Firefox, if no HMD position data, then camera is not reset. Force to zero.
+      // On Firefox, if no HMD position data, camera is not reset. Force to zero.
       headPosition = ZERO_VECTOR3;
     }
     // Add any head movement (via positional tracking) to the camera position.
     camera.position.set(cameraPosition.x + (headPosition.x - lastHeadPosition.x),
                         cameraPosition.y + (headPosition.y - lastHeadPosition.y),
                         cameraPosition.z + (headPosition.z - lastHeadPosition.z));
+
+    // Add any head turning (via orientation tracking) to the camera rotation.
+    camera.rotation.set(rotationX + (headRotationX - lastRotationX),
+                        rotationY + (headRotationY - lastRotationY),
+                        rotationZ + (headRotationZ - lastRotationZ), "XYZ");
+
     vrEffect.render(scene, camera);  
     break;
 
@@ -459,8 +513,8 @@ function launchCardboard() {
 
 function exitCardboard() {
 
-  var width = winRenderWidth;
-  var height = winRenderHeight;
+  var width = nonFullscreenWidth;
+  var height = nonFullscreenHeight;
 
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
@@ -509,6 +563,7 @@ document.addEventListener("webkitfullscreenchange", onFullscreenChange, false);
 window.addEventListener('orientationchange', onOrientationChange);
 
 window.addEventListener("keypress", onKeyPress, true);
+window.addEventListener("keydown", onKeyDown, true);
 
 window.addEventListener("load", main, false);
 
