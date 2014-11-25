@@ -34,7 +34,7 @@ This simple but ground-breaking WebVR game is implemented using Javascript and r
 > - **Forward** thrusters: Left mouse button *or* W key 
 > - **Backward** thrusters: Center mouse button *or* S key  
 > - **Steering**: Turn your head *or* arrow keys
-> - Hold down the button to keep moving or turning.
+> - Hold down the button to keep moving.
 > - You will move in the direction you are looking.
 >
 >**Cardboard Mode**: You will move forward automatically.  
