@@ -33,11 +33,15 @@ This simple but ground-breaking WebVR game is implemented using Javascript and r
 
 > - **Forward** thrusters: Left mouse button *or* W key 
 > - **Backward** thrusters: Center mouse button *or* S key  
+> - **Steering**: Turn your head *or* arrow keys
 > - Hold down the button to keep moving.
 > - You will move in the direction you are looking.
-> - **Cardboard Mode**: You will move forward automatically.  
+>
+>**Cardboard Mode**: You will move forward automatically.  
+You can also tap the screen to stop/start movement.  
 If you run into an asteroid, turn around to reverse course.
-> - Leap Motion</b>: Place one hand in front the the sensor  
+>
+>**Leap Motion**: Place one hand in front the the sensor  
 to move forward, two hands to move backwards.
      
 
