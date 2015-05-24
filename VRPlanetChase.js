@@ -1,11 +1,22 @@
 // VRPlanetChase - WebVR Game
 // For more info see website [http://vrplanetchase.com]
 // Author: Amber Roy [http://github.com/amberroy]
+//
 // Credits:
+//
+// Theme music:
+// Interstellar by Lloyd Boland
+// (used with permission of composer)
+// * Interstellar [https://soundcloud.com/lloydboland/interstellar-unfinished]
+//
 // Sound Effects from FreeSound.org [http://www.freesound.org]
-// * sci-fi-victory: [people/LittleRobotSoundFactory/sounds/270528]
+// * sci-fi-victory [people/LittleRobotSoundFactory/sounds/270528]
 // * sci-fi-warp [people/LittleRobotSoundFactory/sounds/270524]
-// * sci-fi-crash: [people/korgchops/sounds/170635/]
+// * sci-fi-crash [people/korgchops/sounds/170635/]
+//
+// Textures:
+// * RockPerforated [http://www.cgtextures.com/texview.php?id=38675&PHPSESSID=oldd4h4s24tovt8avisojo2vq5]
+// * RedRock [http://fc09.deviantart.net/fs45/i/2009/111/6/6/Red_Rock_Texture_by_Dachande99.jpg]
 //
 // License: MIT License [http://opensource.org/licenses/MIT]
 // Copyright (c) 2015 Amber Roy
@@ -28,6 +39,8 @@ VRPlanetChase =	function ( params ) {
 
 	this.soundVictory;
 	this.soundWarp;
+	this.soundCrash;
+	this.musicTheme;
 
 	// Constants
 
@@ -44,6 +57,9 @@ VRPlanetChase =	function ( params ) {
 	this.capsuleMaterialCrash = new THREE.MeshBasicMaterial(
 		{ wireframe: true, side: THREE.DoubleSide, color: this.colors.RED }
 	);
+	this.capsuleMaterialVictory = new THREE.MeshBasicMaterial(
+		{ wireframe: true, side: THREE.DoubleSide, color: this.colors.BLUE }
+	);
 
 };
 
@@ -53,10 +69,20 @@ VRPlanetChase.prototype.init = function() {
 	this.soundWarp = GameManager.loadAudio(audioDir + 'sci-fi-warp');
 	this.soundVictory = GameManager.loadAudio(audioDir + 'sci-fi-victory');
 	this.soundCrash = GameManager.loadAudio(audioDir + 'sci-fi-crash');
+	this.musicTheme = GameManager.loadAudio(audioDir + 'Interstellar');
 
 	this._createCockpit();
 	this._createFlyControls();
+
+	// Need light source with phong material, otherwise spheres look black.
+	var pointerOne = new THREE.PointLight(0xffffff);
+	pointerOne.position.set(-100,-90,130);
+	GameManager.scene.add(pointerOne);
+
 	this._createGameObjects();
+
+	this.musicTheme.autoplay = true;
+	this.musicTheme.loop = true;
 };
 
 VRPlanetChase.prototype.update = function() {
@@ -120,21 +146,12 @@ VRPlanetChase.prototype._createFlyControls = function() {
 
 
 VRPlanetChase.prototype._createGameObjects = function() {
+
+	console.log("Creating new asteroid field");
+
 	// Create the game world objects and randomize their position.
 
-	// Need light source with phong material, otherwise spheres look black.
-	var pointerOne = new THREE.PointLight(0xffffff);
-	pointerOne.position.set(-100,-90,130);
-	GameManager.scene.add(pointerOne);
-
-	// For random color: Math.floor(Math.random() * 0x1000000
-	/*
-	var COLOR_BLUE = 0x0000ff;
-	var COLOR_RED = 0xff0000;
-	var COLOR_GRAY = 0x808080;
-	var COLOR_GOLD = 0xFFD700;
-	*/
-	var NUM_ASTEROIDS = 200;
+	var NUM_ASTEROIDS = 100;
 
 	// Use sphere with shiny phong material, requries a light source.
 	// SphereGeometry params: radius, widthSegments, heightSegments
@@ -142,8 +159,12 @@ VRPlanetChase.prototype._createGameObjects = function() {
 	//var geometry = new THREE.SphereGeometry( 50, 16, 16);
 	var geometry = new THREE.SphereGeometry( 50, 16, 50);
 
-	this.asteroidMaterial = new THREE.MeshPhongMaterial({ color: this.colors.GRAY });
-	this.redPlanetMaterial = new THREE.MeshPhongMaterial({ color: this.colors.RED });
+	this.asteroidMaterial = new THREE.MeshPhongMaterial(
+		{ map: THREE.ImageUtils.loadTexture( "./assets/images/RockPerforated.jpg" ) }
+	);
+	this.redPlanetMaterial = new THREE.MeshPhongMaterial(
+		{ map: THREE.ImageUtils.loadTexture( "./assets/images/RedRock.jpg" ) }
+	);
 	this.redPlaentFoundMaterial = new THREE.MeshPhongMaterial({ color: this.colors.BLUE });
 	this.asteroidCollisionMaterial = new THREE.MeshPhongMaterial({ color: this.colors.GOLD });
 
@@ -182,8 +203,6 @@ VRPlanetChase.prototype._setRandomPosition = function(mesh) {
 VRPlanetChase.prototype.checkCollision = function(cameraPosition) {
 	// Simple collision detection algorithm.
 
-	// var isCollision = false; // XXX
-
 	var collisionInfo = {
 		collisionObject: null,
 		isRedPlanet: false
@@ -195,19 +214,11 @@ VRPlanetChase.prototype.checkCollision = function(cameraPosition) {
 		var sphere = this.asteroidsArray[i];
 		var distance = cameraPosition.distanceTo(sphere.position);
 		if (distance < sphere.geometry.boundingSphere.radius + asteroidBuffer) {
-			// isCollision = true; // XXX
 			collisionInfo.collisionObject = sphere;
 			console.log("Collision with sphere", i, "radius", sphere.geometry.radius);
 			console.log("camera position", cameraPosition);
 			console.log("sphere position", sphere.position);
 
-			// Collision effect
-			/*
-			sphere.material = this.asteroidCollisionMaterial;
-			setTimeout(function() {
-				sphere.material = this.asteroidMaterial;
-			}.bind( this ), 2000)
-			*/
 			break;
 		}
 	}
@@ -215,36 +226,16 @@ VRPlanetChase.prototype.checkCollision = function(cameraPosition) {
 	// For red planet, detect collision when in the buffer zone, before camera
 	// collides, so player can see the planet color change.
 	var distance = cameraPosition.distanceTo(this.redPlanet.position);
-	var redPlanetBuffer = this.redPlanet.geometry.boundingSphere.radius * 4;
+	var redPlanetBuffer = this.redPlanet.geometry.boundingSphere.radius * 1;
 	if (distance < this.redPlanet.geometry.boundingSphere.radius + redPlanetBuffer) {
-		//isCollision = true; // XXX
 		collisionInfo.collisionObject = this.redPlanet;
 		collisionInfo.isRedPlanet = true;
-		if (!this.isRedPlanetFound) {
-
-			// Found it!	Change color.
-			this.isRedPlanetFound = true;
-			var millis = 500;
-			var blinks = 5;
-			this.redPlanet.material = this.redPlaentFoundMaterial; 
-
-			// Reset the game. Create new set of asteroids to navigate.
-			setTimeout(function() {
-				GameManager.scene.remove(this.asteroidsArray);
-				GameManager.scene.remove(this.redPlanet);
-				this.createGameObjects();
-				this.isRedPlanetFound = false;
-				// We could reset camera here: camera.lookAt(scene.position)
-			}.bind( this ), 2000);	 // Wait a few seconds before restarting.
-		}
 	}
 
 	// if (isCollision) { //
 	if ( collisionInfo.collisionObject ) { //
 		console.log("Collision detected", collisionInfo.collisionObject);
 	}
-
-	//return isCollision; //XXX
 
 	// If collision, return collisionInfo object, else return null.
 	return collisionInfo.collisionObject ? collisionInfo : null;
@@ -255,7 +246,35 @@ VRPlanetChase.prototype.collisionCallback = function( collisionInfo ) {
 	// Collision Effect
 
 	if ( collisionInfo.isRedPlanet ) {
-		// TODO
+
+		if ( this.isRedPlanetFound ) {
+			// We are in the process of resetting the game.
+			return ;
+		}
+
+		this.isRedPlanetFound = true;
+
+		this.capsuleMesh.material = this.capsuleMaterialVictory;
+		setTimeout(function() {
+			this.capsuleMesh.material = this.capsuleMaterial;
+		}.bind( this ), 3000)
+
+		this.soundVictory.play();
+
+		// Reset the game. Create new set of asteroids to navigate.
+		setTimeout(function() {
+
+			GameManager.scene.remove(this.asteroidsArray);
+			GameManager.scene.remove(this.redPlanet);
+
+			// Start player back at center
+			this.player.position.copy( GameManager.scene.position );
+
+			this._createGameObjects();
+			this.isRedPlanetFound = false;
+
+		}.bind( this ), 3000);	 // Wait a few seconds before restarting.
+
 	} else {
 
 		this.capsuleMesh.material = this.capsuleMaterialCrash;
