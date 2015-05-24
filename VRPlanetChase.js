@@ -21,7 +21,6 @@ VRPlanetChase =	function ( params ) {
 
 VRPlanetChase.prototype.init = function() { 
 
-	GameManager.vrControls.scale = 100;
 	this._createCockpit();
 	this._createFlyControls();
 	this._createGameObjects();
@@ -38,9 +37,9 @@ VRPlanetChase.prototype._createCockpit = function() {
 
     this.cockpit = new THREE.Object3D(); // grouping object
 
-    var top = 100;
-    var bottom = 125;
-    var height = 250;
+    var top = 2.0;
+    var bottom = 2.5;
+    var height = 5.0;
     var radiusSeg = 12;
     var heightSeg = 50;
     var isOpenEnded = true;
@@ -68,7 +67,7 @@ VRPlanetChase.prototype._createFlyControls = function() {
 	// Fly controls: [WASD] move, [R|F] up | down,
 	// [Q|E] roll, [up|down] pitch, [left|right] yaw
 	this.flyControls = new THREE.FlyControls( this.cockpit );
-	this.flyControls.movementSpeed = 100;
+	this.flyControls.movementSpeed = 10;
 	this.flyControls.domElement = document.body;
 	this.flyControls.rollSpeed = Math.PI / 24;
 	this.flyControls.autoForward = false;

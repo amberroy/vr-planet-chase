@@ -122,7 +122,16 @@ THREE.FlyControls = function ( object, domElement ) {
 
 		if ( this.dragToLook ) {
 
-			this.mouseStatus ++;
+			// Left-click forward, right-drag look.
+			switch ( event.button ) {
+
+				case 0: this.moveState.forward = 1; break;
+				case 1: this.moveState.back = 1; break;
+				case 2: this.mouseStatus ++; break;
+
+			}
+
+			this.updateMovementVector();
 
 		} else {
 
@@ -163,9 +172,17 @@ THREE.FlyControls = function ( object, domElement ) {
 
 		if ( this.dragToLook ) {
 
-			this.mouseStatus --;
-
 			this.moveState.yawLeft = this.moveState.pitchDown = 0;
+
+			console.log("event.button", event.button);
+			switch ( event.button ) {
+
+				case 0: this.moveState.forward = 0; break;
+				case 1: this.moveState.back = 0; break;
+				case 2: this.mouseStatus --; break;
+			}
+
+			this.updateMovementVector();
 
 		} else {
 
