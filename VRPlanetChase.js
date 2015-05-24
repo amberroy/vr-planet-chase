@@ -15,29 +15,36 @@ VRPlanetChase =	function ( params ) {
 	this.asteroidCollisionMaterial;
 
 	this.cockpit;
-
-	this.clock = new THREE.Clock();
-	this.autoMoveForward = true;
+	this.flyControls;
 
 };
 
 VRPlanetChase.prototype.init = function() { 
+
+	GameManager.vrControls.scale = 100;
 	this._createCockpit();
+	this._createFlyControls();
 	this._createGameObjects();
 };
 
-VRPlanetChase.prototype.update = function() {}; // no-op
+VRPlanetChase.prototype.update = function() {
+
+	var delta = this.clock.getDelta();
+	this.flyControls.update( delta );
+
+} // no-op
 
 VRPlanetChase.prototype._createCockpit = function() {
 
     this.cockpit = new THREE.Object3D(); // grouping object
 
-    var top = 200;
-    var bottom = 250;
-    var height = 500;
+    var top = 100;
+    var bottom = 125;
+    var height = 250;
     var radiusSeg = 12;
     var heightSeg = 50;
     var isOpenEnded = true;
+
     var capsuleMesh = new THREE.Mesh(
     	new THREE.CylinderGeometry( top, bottom, height, radiusSeg, heightSeg, isOpenEnded ),
 		new THREE.MeshBasicMaterial( { wireframe: true, side: THREE.DoubleSide } )
@@ -52,13 +59,28 @@ VRPlanetChase.prototype._createCockpit = function() {
 	backWallMesh.position.z = height / 2;
 	this.cockpit.add( backWallMesh );
 
-    GameManager.player.add( this.cockpit );
+	GameManager.scene.add( this.cockpit );
 
 };
 
-//---------------------------------------------------------------------------
-// Game Objects
-//---------------------------------------------------------------------------
+VRPlanetChase.prototype._createFlyControls = function() {
+
+	// Fly controls: [WASD] move, [R|F] up | down,
+	// [Q|E] roll, [up|down] pitch, [left|right] yaw
+	this.flyControls = new THREE.FlyControls( this.cockpit );
+	this.flyControls.movementSpeed = 100;
+	this.flyControls.domElement = document.body;
+	this.flyControls.rollSpeed = Math.PI / 24;
+	this.flyControls.autoForward = false;
+	this.flyControls.dragToLook = true;
+
+	this.cockpit.add( GameManager.player );
+
+	// Clock used to get delta when updating flycontrols.
+	this.clock = new THREE.Clock();
+
+};
+
 
 VRPlanetChase.prototype._createGameObjects = function() {
 	// Create the game world objects and randomize their position.
@@ -174,71 +196,6 @@ VRPlanetChase.prototype._checkCollision = function(cameraPosition) {
 	return isCollision;
 };
 
-//---------------------------------------------------------------------------
-// Game Controls
-//---------------------------------------------------------------------------
-
-VRPlanetChase.prototype.onKeyPress = function(event) {
-	var MOVE_ON_KEY = 25;
-	console.log("keypress", event.which)
-
-	switch (event.which) {
-
-	case 'w'.charCodeAt(0):
-		// Walk forward
-		moveForward(MOVE_ON_KEY * -1);
-		break;
-
-	case 's'.charCodeAt(0):
-		// Walk backwards
-		moveForward(MOVE_ON_KEY);
-		break;
-
-	case 13:
-		// "Enter" key was pressed
-		launchVR();
-		break;
-
-	case 'f'.charCodeAt(0):
-		launchVR();
-		break;
-
-	case 'z'.charCodeAt(0):
-		vrControls.zeroSensor();
-		break;
-	}		
-
-};
-
-VRPlanetChase.prototype.onKeyDown = function(event) {
-	// Keypress not called on arrow keys, handle them here.
-	var ROTATE_ANGLE = 10 * (Math.PI / 180);
-
-	switch (event.which) {
-
-	case 37:	// LEFT arrow 
-		console.log("keydown LEFT");
-		GameManager.camera.rotateOnAxis( new THREE.Vector3(0,1,0), ROTATE_ANGLE);
-		break;
-
-	case 39:	// RIGHT arrow 
-		console.log("keydown RIGHT");
-		GameManager.camera.rotateOnAxis( new THREE.Vector3(0,1,0), ROTATE_ANGLE * -1);
-		break;
-
-	case 38:	// UP arrow 
-		console.log("keydown UP");
-		GameManager.camera.rotateOnAxis( new THREE.Vector3(1,0,0), ROTATE_ANGLE);
-		break;
-
-	case 40:	// DOWN arrow 
-		console.log("keydown DOWN");
-		GameManager.camera.rotateOnAxis( new THREE.Vector3(1,0,0), ROTATE_ANGLE * -1);
-		break;
-
-	}
-
-};
 
 VRPlanetChase.prototype.moveForward = function(moveDistance) {
 
@@ -257,53 +214,4 @@ VRPlanetChase.prototype.moveForward = function(moveDistance) {
 		GameManager.camera.translateZ(moveDistance);
 	}
 };
-
-VRPlanetChase.prototype.onMouseDown = function(event) {
-	// Create timer to repeatedly call method while mouse is down.
-
-	// Tapping screen toggles the auto-move in cardboard mode.
-	if (renderMode === modes.cbVR) {
-		this.autoMoveForward = !this.autoMoveForward;
-	}
-
-	if(this.mouseDownIntervalID == -1) {	// Only create if none exists.
-		 // Pass event to the function so we know which button is clicked.
-		 var func = function() { whileMouseDown(event); };
-		 this.mouseDownIntervalID = setInterval(func, 100); // every 100ms
-	 }
-};
-
-VRPlanetChase.prototype.onMouseUp = function(event) {
-	// When mouse button released, clear the timer.
-	 if(this.mouseDownIntervalID != -1) {	// Only clear if exists.
-		 clearInterval(this.mouseDownIntervalID);
-		 this.mouseDownIntervalID =- 1;
-	 }
-};
-
-VRPlanetChase.prototype.whileMouseDown = function(event) {
-	// While mouse is down, move the camera forward.
-	console.log("mouse button", event.which);
-
-	var MOVE_ON_CLICK = -25;
-	switch (event.which) {
-		case 1:
-			// left click: move forwards
-			moveForward(MOVE_ON_CLICK);
-			break;
-		case 2:
-			// middle click
-			// Back button on Microsoft mouse also sends this; ignore.
-			break;
-		case 3:
-			// right click: move backwards
-			moveForward(MOVE_ON_CLICK * -1);
-			break;
-
-		default:	
-			// Unrecognized button
-	}
-
-};
-
 

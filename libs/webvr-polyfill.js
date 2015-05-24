@@ -272,12 +272,11 @@ function MouseKeyboardPositionSensorVRDevice() {
   this.deviceId = 'webvr-polyfill:mouse-keyboard';
   this.deviceName = 'VR Position Device (webvr-polyfill:mouse-keyboard)';
 
-  // DISABLE: use FlyControls instead -AJR 
   // Attach to mouse and keyboard events.
-  // window.addEventListener('keydown', this.onKeyDown_.bind(this));
-  // window.addEventListener('mousemove', this.onMouseMove_.bind(this));
-  // window.addEventListener('mousedown', this.onMouseDown_.bind(this));
-  // window.addEventListener('mouseup', this.onMouseUp_.bind(this));
+  window.addEventListener('keydown', this.onKeyDown_.bind(this));
+  window.addEventListener('mousemove', this.onMouseMove_.bind(this));
+  window.addEventListener('mousedown', this.onMouseDown_.bind(this));
+  window.addEventListener('mouseup', this.onMouseUp_.bind(this));
 
   this.phi = 0;
   this.theta = 0;
@@ -2578,7 +2577,8 @@ WebVRPolyfill.prototype.enablePolyfill = function() {
   if (this.isMobile()) {
     this.devices.push(new GyroPositionSensorVRDevice());
   } else {
-    this.devices.push(new MouseKeyboardPositionSensorVRDevice());
+    // Uncomment to make arrow keys emulate orientation tracking. -AJR
+    //this.devices.push(new MouseKeyboardPositionSensorVRDevice());
     // Uncomment to add positional tracking via webcam.
     //this.devices.push(new WebcamPositionSensorVRDevice());
   }

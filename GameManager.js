@@ -23,26 +23,8 @@ GameManager = function( game, params ) {
 	this.head = new THREE.Object3D();
 	this.player.add( this.head );
 	this.head.add( this.camera );
+	this.player.add( this.camera );
 	this.scene.add( this.player );
-
-	// Fly controls: [WASD] move, [R|F] up | down,
-	// [Q|E] roll, [up|down] pitch, [left|right] yaw
-	this.flyControls = new THREE.FlyControls( this.player );
-	this.flyControls.movementSpeed = 100;
-	this.flyControls.domElement = document.body;
-	this.flyControls.rollSpeed = Math.PI / 24;
-	this.flyControls.autoForward = false;
-	this.flyControls.dragToLook = true;
-
-	// Clock used to get delta when updating flycontrols.
-	this.clock = new THREE.Clock();
-
-	// For vrControlsUpdateFix
-	this._ZERO_VECTOR3 = Object.freeze(new THREE.Vector3(0,0,0));
-	this._headPosition = this._ZERO_VECTOR3;
-	this._headRotationX = 0;
-	this._headRotationY = 0;
-	this._headRotationZ = 0;
 
 	this._addEventListeners();
 };
@@ -101,13 +83,8 @@ GameManager.prototype._defaultUpdate = function() {
 // Request animation frame loop function
 GameManager.prototype.animate = function() {
 
-	var delta = this.clock.getDelta();
-
 	// Update VR headset position and apply to camera.
 	this.vrControls.update();
-
-	// Update fly controls
-	this.flyControls.update( delta );
 
 	// Update game objects
 	this.update();
@@ -141,45 +118,4 @@ GameManager.prototype._addEventListeners = function () {
 	window.addEventListener('resize', onWindowResize.bind( this ), false);
 
 };
-
-GameManager.prototype.vrControlsUpdateFix = function() {	
-
-		var cameraPosition = this.camera.position.clone();
-		var lastHeadPosition = this._headPosition;
-
-		var rotationX = this.camera.rotation.x;
-		var rotationY = this.camera.rotation.y;
-		var rotationZ = this.camera.rotation.z;
-		var lastRotationX = this._headRotationX;
-		var lastRotationY = this._headRotationY;
-		var lastRotationZ = this._headRotationZ;
-
-		this.vrControls.update();	// Resets camera to absolute head position from HMD.
-
-		this._headPosition = this.camera.position.clone();
-		this._headRotationX = this.camera.rotation.x;
-		this._headRotationY = this.camera.rotation.y;
-		this._headRotationZ = this.camera.rotation.z;
-
-		if (this._headPosition.equals(cameraPosition)) {
-			// On Firefox, if no HMD position data, camera is not reset. Force to zero.
-			this._headPosition = this._ZERO_VECTOR3;
-		}
-		// Add any head movement (via positional tracking) to the camera position.
-		this.camera.position.set(
-			cameraPosition.x + (this._headPosition.x - lastHeadPosition.x),
-			cameraPosition.y + (this._headPosition.y - lastHeadPosition.y),
-			cameraPosition.z + (this._headPosition.z - lastHeadPosition.z)
-		);
-
-		// Add any head turning (via orientation tracking) to the camera rotation.
-		this.camera.rotation.set(
-			rotationX + (this._headRotationX - lastRotationX), 
-			rotationY + (this._headRotationY - lastRotationY), 
-			rotationZ + (this._headRotationZ - lastRotationZ),
-		"XYZ");
-
-};
-
-
 
