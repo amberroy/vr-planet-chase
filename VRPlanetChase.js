@@ -14,13 +14,47 @@ VRPlanetChase =	function ( params ) {
 	this.redPlaentFoundMaterial;
 	this.asteroidCollisionMaterial;
 
+	this.cockpit;
+
 	this.clock = new THREE.Clock();
 	this.autoMoveForward = true;
 
 };
 
-VRPlanetChase.prototype.init = function() { this._createGameObjects(); };
+VRPlanetChase.prototype.init = function() { 
+	this._createCockpit();
+	this._createGameObjects();
+};
+
 VRPlanetChase.prototype.update = function() {}; // no-op
+
+VRPlanetChase.prototype._createCockpit = function() {
+
+    this.cockpit = new THREE.Object3D(); // grouping object
+
+    var top = 200;
+    var bottom = 250;
+    var height = 500;
+    var radiusSeg = 12;
+    var heightSeg = 50;
+    var isOpenEnded = true;
+    var capsuleMesh = new THREE.Mesh(
+    	new THREE.CylinderGeometry( top, bottom, height, radiusSeg, heightSeg, isOpenEnded ),
+		new THREE.MeshBasicMaterial( { wireframe: true, side: THREE.DoubleSide } )
+	);
+    capsuleMesh.rotation.x =  -1 * Math.PI / 2;
+	this.cockpit.add( capsuleMesh );
+
+	var backWallMesh = new THREE.Mesh(
+    	new THREE.CircleGeometry( bottom, heightSeg ),
+		new THREE.MeshBasicMaterial( { color: "#222222", side: THREE.DoubleSide } )
+	);
+	backWallMesh.position.z = height / 2;
+	this.cockpit.add( backWallMesh );
+
+    GameManager.player.add( this.cockpit );
+
+};
 
 //---------------------------------------------------------------------------
 // Game Objects

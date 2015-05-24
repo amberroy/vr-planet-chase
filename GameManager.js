@@ -8,8 +8,8 @@ GameManager = function( game, params ) {
 	this.update = game && game.update.bind( game ) || this._defaultUpdate;
 
 	this.renderer = new THREE.WebGLRenderer({ antialias: true });
-	this.renderer.setPixelRatio(window.devicePixelRatio );
-	document.body.appendChild(this.renderer.domElement );
+	this.renderer.setPixelRatio( window.devicePixelRatio );
+	document.body.appendChild( this.renderer.domElement );
 
 	this.scene = new THREE.Scene();
 	this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.3, 10000 );
@@ -18,7 +18,24 @@ GameManager = function( game, params ) {
 	this.vrEffect.setSize( window.innerWidth, window.innerHeight );
 	this.vrManager = new WebVRManager( this.renderer, this.vrEffect, {hideButton: false} );
 
-	this._addEventListeners();
+	// Don't move the camera, move the player instead.
+	this.player = new THREE.Object3D();
+	this.head = new THREE.Object3D();
+	this.player.add( this.head );
+	this.head.add( this.camera );
+	this.scene.add( this.player );
+
+	// Fly controls: [WASD] move, [R|F] up | down,
+	// [Q|E] roll, [up|down] pitch, [left|right] yaw
+	this.flyControls = new THREE.FlyControls( this.player );
+	this.flyControls.movementSpeed = 100;
+	this.flyControls.domElement = document.body;
+	this.flyControls.rollSpeed = Math.PI / 24;
+	this.flyControls.autoForward = false;
+	this.flyControls.dragToLook = true;
+
+	// Clock used to get delta when updating flycontrols.
+	this.clock = new THREE.Clock();
 
 	// For vrControlsUpdateFix
 	this._ZERO_VECTOR3 = Object.freeze(new THREE.Vector3(0,0,0));
@@ -26,6 +43,8 @@ GameManager = function( game, params ) {
 	this._headRotationX = 0;
 	this._headRotationY = 0;
 	this._headRotationZ = 0;
+
+	this._addEventListeners();
 };
 
 GameManager.prototype._defaultInit = function() {
@@ -82,8 +101,13 @@ GameManager.prototype._defaultUpdate = function() {
 // Request animation frame loop function
 GameManager.prototype.animate = function() {
 
+	var delta = this.clock.getDelta();
+
 	// Update VR headset position and apply to camera.
 	this.vrControls.update();
+
+	// Update fly controls
+	this.flyControls.update( delta );
 
 	// Update game objects
 	this.update();
@@ -130,7 +154,7 @@ GameManager.prototype.vrControlsUpdateFix = function() {
 		var lastRotationY = this._headRotationY;
 		var lastRotationZ = this._headRotationZ;
 
-		vrControls.update();	// Resets camera to absolute head position from HMD.
+		this.vrControls.update();	// Resets camera to absolute head position from HMD.
 
 		this._headPosition = this.camera.position.clone();
 		this._headRotationX = this.camera.rotation.x;
