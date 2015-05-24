@@ -2,12 +2,22 @@
  * @author James Baicoianu / http://www.baicoianu.com/
  */
 
-THREE.FlyControls = function ( object, domElement ) {
+THREE.FlyControls = function ( object, domElement, params ) {
 
 	this.object = object;
 
 	this.domElement = ( domElement !== undefined ) ? domElement : document;
 	if ( domElement ) this.domElement.setAttribute( 'tabindex', -1 );
+
+	// options parameters
+	var p = params || {};
+
+	// function called before moving, argument is the new position.
+	// returns collisionInfo object, or null if no collision.
+	this.checkCollision  = p.checkCollision || null;
+
+	// callback envoked on a collision, argument is the collisionInfo object. 
+	this.collisionCallback  = p.collisionCallback || null;
 
 	// API
 
@@ -206,18 +216,45 @@ THREE.FlyControls = function ( object, domElement ) {
 		var moveMult = delta * this.movementSpeed;
 		var rotMult = delta * this.rollSpeed;
 
-		this.object.translateX( this.moveVector.x * moveMult );
-		this.object.translateY( this.moveVector.y * moveMult );
-		this.object.translateZ( this.moveVector.z * moveMult );
+		var objectClone = this.object.clone();
+
+		objectClone.translateX( this.moveVector.x * moveMult );
+		objectClone.translateY( this.moveVector.y * moveMult );
+		objectClone.translateZ( this.moveVector.z * moveMult );
 
 		this.tmpQuaternion.set( this.rotationVector.x * rotMult, this.rotationVector.y * rotMult, this.rotationVector.z * rotMult, 1 ).normalize();
-		this.object.quaternion.multiply( this.tmpQuaternion );
+		objectClone.quaternion.multiply( this.tmpQuaternion );
 
 		// expose the rotation vector for convenience
-		this.object.rotation.setFromQuaternion( this.object.quaternion, this.object.rotation.order );
+		objectClone.rotation.setFromQuaternion( objectClone.quaternion, objectClone.rotation.order );
 
-		// force update, else object appears to "jump" ahead of player when moving in VR mode
-		this.object.updateMatrixWorld();
+		var collisionInfo = null;
+		if ( this.checkCollision ) {
+
+			// Optionally check for collision before moving object.
+			collisionInfo = this.checkCollision( objectClone.position );
+
+		}
+
+		if ( collisionInfo === null ) {
+
+			// No collision, ok to move.
+			this.object.position.copy( objectClone.position );
+			this.object.rotation.copy( objectClone.rotation );
+
+			// force update, else object appears to "jump" ahead of player when moving in VR mode
+			this.object.updateMatrixWorld();
+
+		} else {
+
+			// Collision detected!  Do not apply movement.
+			if ( this.collisionCallback ) {
+
+				this.collisionCallback( collisionInfo );
+
+			}
+
+		}
 
 	};
 

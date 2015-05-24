@@ -2,6 +2,7 @@
 * @author Amber Roy / http://github.com/amberroy 
 */
 
+
 GameManager = function( game, params ) {
 
 	this.init = game && game.init.bind( game ) || this._defaultInit;
@@ -29,9 +30,25 @@ GameManager = function( game, params ) {
 	this._addEventListeners();
 };
 
+GameManager.prototype.loadAudio = function(filenameBase) {
+
+	// Reference:
+	// https://developer.mozilla.org/en-US/docs/Web/HTML/Supported_media_formats
+	// http://www.online-convert.com/
+
+	// Load sound effect. Chromium doesn't support mp3 so include wav too.
+	var ext = (new Audio()).canPlayType('audio/mpeg') ? ".mp3" : ".wav";
+	var audio = new Audio(filenameBase + ext);	
+	return audio;
+
+};
+
+
 GameManager.prototype._defaultInit = function() {
 
 	console.log("GameManager using default init()");
+
+	var gridTileImage = "./assets/images/grid-tile.png"
 
 	// Create 3D objects.
 	var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
@@ -48,9 +65,7 @@ GameManager.prototype._defaultInit = function() {
 
 	// Also add a repeating grid as a skybox.
 	var boxWidth = 10;
-	var texture = THREE.ImageUtils.loadTexture(
-		'./box.png'
-	);
+	var texture = THREE.ImageUtils.loadTexture(gridTileImage);
 	texture.wrapS = THREE.RepeatWrapping;
 	texture.wrapT = THREE.RepeatWrapping;
 	texture.repeat.set(boxWidth, boxWidth);

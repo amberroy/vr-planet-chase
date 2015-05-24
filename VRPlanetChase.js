@@ -1,6 +1,14 @@
-/**
-* @author Amber Roy / http://github.com/amberroy 
-*/
+// VRPlanetChase - WebVR Game
+// For more info see website [http://vrplanetchase.com]
+// Author: Amber Roy [http://github.com/amberroy]
+// Credits:
+// Sound Effects from FreeSound.org [http://www.freesound.org]
+// * sci-fi-victory: [people/LittleRobotSoundFactory/sounds/270528]
+// * sci-fi-warp [people/LittleRobotSoundFactory/sounds/270524]
+// * sci-fi-crash: [people/korgchops/sounds/170635/]
+//
+// License: MIT License [http://opensource.org/licenses/MIT]
+// Copyright (c) 2015 Amber Roy
 
 VRPlanetChase =	function ( params ) {
 
@@ -15,11 +23,36 @@ VRPlanetChase =	function ( params ) {
 	this.asteroidCollisionMaterial;
 
 	this.cockpit;
+	this.capsuleMesh;
 	this.flyControls;
+
+	this.soundVictory;
+	this.soundWarp;
+
+	// Constants
+
+	this.colors = {
+		BLUE: 0x0000ff,
+		RED: 0xff0000,
+		GRAY: 0x808080,
+		GOLD: 0xFFD700,
+	};
+
+	this.capsuleMaterial = new THREE.MeshBasicMaterial(
+		{ wireframe: true, side: THREE.DoubleSide }
+	);
+	this.capsuleMaterialCrash = new THREE.MeshBasicMaterial(
+		{ wireframe: true, side: THREE.DoubleSide, color: this.colors.RED }
+	);
 
 };
 
 VRPlanetChase.prototype.init = function() { 
+
+	var audioDir = "./assets/sounds/";
+	this.soundWarp = GameManager.loadAudio(audioDir + 'sci-fi-warp');
+	this.soundVictory = GameManager.loadAudio(audioDir + 'sci-fi-victory');
+	this.soundCrash = GameManager.loadAudio(audioDir + 'sci-fi-crash');
 
 	this._createCockpit();
 	this._createFlyControls();
@@ -36,6 +69,7 @@ VRPlanetChase.prototype.update = function() {
 VRPlanetChase.prototype._createCockpit = function() {
 
     this.cockpit = new THREE.Object3D(); // grouping object
+    this.cockpit.name = "cockpit";
 
     var top = 2.0;
     var bottom = 2.5;
@@ -44,12 +78,12 @@ VRPlanetChase.prototype._createCockpit = function() {
     var heightSeg = 50;
     var isOpenEnded = true;
 
-    var capsuleMesh = new THREE.Mesh(
+    this.capsuleMesh = new THREE.Mesh(
     	new THREE.CylinderGeometry( top, bottom, height, radiusSeg, heightSeg, isOpenEnded ),
 		new THREE.MeshBasicMaterial( { wireframe: true, side: THREE.DoubleSide } )
 	);
-    capsuleMesh.rotation.x =  -1 * Math.PI / 2;
-	this.cockpit.add( capsuleMesh );
+    this.capsuleMesh.rotation.x =  -1 * Math.PI / 2;
+	this.cockpit.add( this.capsuleMesh );
 
 	var backWallMesh = new THREE.Mesh(
     	new THREE.CircleGeometry( bottom, heightSeg ),
@@ -64,11 +98,15 @@ VRPlanetChase.prototype._createCockpit = function() {
 
 VRPlanetChase.prototype._createFlyControls = function() {
 
+	var params = {
+		checkCollision: this.checkCollision.bind( this ),
+		collisionCallback: this.collisionCallback.bind( this ),
+	};
+
 	// Fly controls: [WASD] move, [R|F] up | down,
 	// [Q|E] roll, [up|down] pitch, [left|right] yaw
-	this.flyControls = new THREE.FlyControls( this.cockpit );
+	this.flyControls = new THREE.FlyControls( this.cockpit, document.body, params );
 	this.flyControls.movementSpeed = 100;
-	this.flyControls.domElement = document.body;
 	this.flyControls.rollSpeed = Math.PI / 24;
 	this.flyControls.autoForward = false;
 	this.flyControls.dragToLook = true;
@@ -90,10 +128,12 @@ VRPlanetChase.prototype._createGameObjects = function() {
 	GameManager.scene.add(pointerOne);
 
 	// For random color: Math.floor(Math.random() * 0x1000000
+	/*
 	var COLOR_BLUE = 0x0000ff;
 	var COLOR_RED = 0xff0000;
 	var COLOR_GRAY = 0x808080;
 	var COLOR_GOLD = 0xFFD700;
+	*/
 	var NUM_ASTEROIDS = 200;
 
 	// Use sphere with shiny phong material, requries a light source.
@@ -102,10 +142,10 @@ VRPlanetChase.prototype._createGameObjects = function() {
 	//var geometry = new THREE.SphereGeometry( 50, 16, 16);
 	var geometry = new THREE.SphereGeometry( 50, 16, 50);
 
-	this.asteroidMaterial = new THREE.MeshPhongMaterial({ color: COLOR_GRAY });
-	this.redPlanetMaterial = new THREE.MeshPhongMaterial({ color: COLOR_RED });
-	this.redPlaentFoundMaterial = new THREE.MeshPhongMaterial({ color: COLOR_BLUE });
-	this.asteroidCollisionMaterial = new THREE.MeshPhongMaterial({ color: COLOR_GOLD });
+	this.asteroidMaterial = new THREE.MeshPhongMaterial({ color: this.colors.GRAY });
+	this.redPlanetMaterial = new THREE.MeshPhongMaterial({ color: this.colors.RED });
+	this.redPlaentFoundMaterial = new THREE.MeshPhongMaterial({ color: this.colors.BLUE });
+	this.asteroidCollisionMaterial = new THREE.MeshPhongMaterial({ color: this.colors.GOLD });
 
 	this.asteroidsArray = [];								// Used for collision detection.
 
@@ -139,27 +179,35 @@ VRPlanetChase.prototype._setRandomPosition = function(mesh) {
 		mesh.updateMatrix();
 };
 
-VRPlanetChase.prototype._checkCollision = function(cameraPosition) {
+VRPlanetChase.prototype.checkCollision = function(cameraPosition) {
 	// Simple collision detection algorithm.
 
-	var isCollision = false;
+	// var isCollision = false; // XXX
+
+	var collisionInfo = {
+		collisionObject: null,
+		isRedPlanet: false
+	};
 
 	// Check for collision between camera and each asteroid.	
-	var asteroidBuffer = 0;
+	var asteroidBuffer = 5;
 	for (var i = 0; i < this.asteroidsArray.length; i++) {
 		var sphere = this.asteroidsArray[i];
 		var distance = cameraPosition.distanceTo(sphere.position);
 		if (distance < sphere.geometry.boundingSphere.radius + asteroidBuffer) {
-			isCollision = true;
+			// isCollision = true; // XXX
+			collisionInfo.collisionObject = sphere;
 			console.log("Collision with sphere", i, "radius", sphere.geometry.radius);
 			console.log("camera position", cameraPosition);
 			console.log("sphere position", sphere.position);
 
 			// Collision effect
+			/*
 			sphere.material = this.asteroidCollisionMaterial;
 			setTimeout(function() {
 				sphere.material = this.asteroidMaterial;
 			}.bind( this ), 2000)
+			*/
 			break;
 		}
 	}
@@ -169,7 +217,9 @@ VRPlanetChase.prototype._checkCollision = function(cameraPosition) {
 	var distance = cameraPosition.distanceTo(this.redPlanet.position);
 	var redPlanetBuffer = this.redPlanet.geometry.boundingSphere.radius * 4;
 	if (distance < this.redPlanet.geometry.boundingSphere.radius + redPlanetBuffer) {
-		isCollision = true;
+		//isCollision = true; // XXX
+		collisionInfo.collisionObject = this.redPlanet;
+		collisionInfo.isRedPlanet = true;
 		if (!this.isRedPlanetFound) {
 
 			// Found it!	Change color.
@@ -189,12 +239,35 @@ VRPlanetChase.prototype._checkCollision = function(cameraPosition) {
 		}
 	}
 
-	if (isCollision) {
-		console.log("Collision detected");
+	// if (isCollision) { //
+	if ( collisionInfo.collisionObject ) { //
+		console.log("Collision detected", collisionInfo.collisionObject);
 	}
-	return isCollision;
+
+	//return isCollision; //XXX
+
+	// If collision, return collisionInfo object, else return null.
+	return collisionInfo.collisionObject ? collisionInfo : null;
 };
 
+VRPlanetChase.prototype.collisionCallback = function( collisionInfo ) {
+
+	// Collision Effect
+
+	if ( collisionInfo.isRedPlanet ) {
+		// TODO
+	} else {
+
+		this.capsuleMesh.material = this.capsuleMaterialCrash;
+		setTimeout(function() {
+			this.capsuleMesh.material = this.capsuleMaterial;
+		}.bind( this ), 400)
+
+		this.soundCrash.play();
+
+	}
+
+};
 
 VRPlanetChase.prototype.moveForward = function(moveDistance) {
 
@@ -209,7 +282,7 @@ VRPlanetChase.prototype.moveForward = function(moveDistance) {
 		return;
 	}
 
-	if (!this._checkCollision(movedCamera.position)) {
+	if (!this.checkCollision(movedCamera.position)) {
 		GameManager.camera.translateZ(moveDistance);
 	}
 };
