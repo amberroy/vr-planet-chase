@@ -90,6 +90,15 @@ VRPlanetChase.prototype.update = function() {
 	var delta = this.clock.getDelta();
 	this.flyControls.update( delta );
 
+	this.redPlanet.rotation.y += 0.001;
+	/*
+	for (var i=0; i < this.asteroidsArray.length; i++ ) {
+		var asteroid = this.asteroidsArray[i];
+		asteroid.rotation.y += 10;
+		console.log("asteroid rotation", asteroid.rotation);
+	}
+	*/
+
 } // no-op
 
 VRPlanetChase.prototype._createCockpit = function() {
@@ -157,7 +166,8 @@ VRPlanetChase.prototype._createGameObjects = function() {
 	// SphereGeometry params: radius, widthSegments, heightSegments
 	// Phong params: color, specular(color), shininess
 	//var geometry = new THREE.SphereGeometry( 50, 16, 16);
-	var geometry = new THREE.SphereGeometry( 50, 16, 50);
+	var asteroidRadius = 50;
+	var asteroidGeo = new THREE.SphereGeometry( asteroidRadius, 16, 50);
 
 	this.asteroidMaterial = new THREE.MeshPhongMaterial(
 		{ map: THREE.ImageUtils.loadTexture( "./assets/images/RockPerforated.jpg" ) }
@@ -173,15 +183,17 @@ VRPlanetChase.prototype._createGameObjects = function() {
 	// Create the asteroids.
 	for (var i = 0; i < NUM_ASTEROIDS; i ++) {
 
-		var asteroid = new THREE.Mesh(geometry, this.asteroidMaterial);
+		var asteroid = new THREE.Mesh( asteroidGeo, this.asteroidMaterial );
 		this._setRandomPosition(asteroid);
+		asteroid.matrixAutoUpdate = false; // Remove this if asteroids rotate.
 
 		this.asteroidsArray.push(asteroid);
 	}
 
 	// Create the planet.
-	this.redPlanet = new THREE.Mesh(geometry, this.redPlanetMaterial);
-	this._setRandomPosition(this.redPlanet);
+	var planetGeo = new THREE.SphereGeometry( asteroidRadius * 2, 16, 50 );
+	this.redPlanet = new THREE.Mesh( planetGeo, this.redPlanetMaterial );
+	this._setRandomPosition( this.redPlanet );
 
 	for (var i=0; i < this.asteroidsArray.length; i++) {
 		GameManager.scene.add( this.asteroidsArray[i] );
@@ -196,7 +208,7 @@ VRPlanetChase.prototype._setRandomPosition = function(mesh) {
 		mesh.position.z = Math.random() * 2000 - 1000;
 		mesh.rotation.x = Math.random() * 2 * Math.PI;
 		mesh.rotation.y = Math.random() * 2 * Math.PI;
-		mesh.matrixAutoUpdate = false;
+		mesh.rotation.z = Math.random() * 2 * Math.PI;
 		mesh.updateMatrix();
 };
 
