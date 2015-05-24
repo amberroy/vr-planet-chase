@@ -11,8 +11,8 @@
 //
 // Sound Effects from FreeSound.org [http://www.freesound.org]
 // * sci-fi-victory [people/LittleRobotSoundFactory/sounds/270528]
-// * sci-fi-warp [people/LittleRobotSoundFactory/sounds/270524]
 // * sci-fi-crash [people/korgchops/sounds/170635/]
+// * sci-fi-warp [people/LittleRobotSoundFactory/sounds/270524]
 //
 // Textures:
 // * RockPerforated [http://www.cgtextures.com/texview.php?id=38675&PHPSESSID=oldd4h4s24tovt8avisojo2vq5]
@@ -43,6 +43,8 @@ VRPlanetChase =	function ( params ) {
 	this.musicTheme;
 
 	// Constants
+
+	this.asteroidRadius = 50;
 
 	this.colors = {
 		BLUE: 0x0000ff,
@@ -79,6 +81,7 @@ VRPlanetChase.prototype.init = function() {
 	pointerOne.position.set(-100,-90,130);
 	GameManager.scene.add(pointerOne);
 
+	this._createStars();
 	this._createGameObjects();
 
 	this.musicTheme.autoplay = true;
@@ -166,8 +169,7 @@ VRPlanetChase.prototype._createGameObjects = function() {
 	// SphereGeometry params: radius, widthSegments, heightSegments
 	// Phong params: color, specular(color), shininess
 	//var geometry = new THREE.SphereGeometry( 50, 16, 16);
-	var asteroidRadius = 50;
-	var asteroidGeo = new THREE.SphereGeometry( asteroidRadius, 16, 50);
+	var asteroidGeo = new THREE.SphereGeometry( this.asteroidRadius, 16, 50);
 
 	this.asteroidMaterial = new THREE.MeshPhongMaterial(
 		{ map: THREE.ImageUtils.loadTexture( "./assets/images/RockPerforated.jpg" ) }
@@ -191,7 +193,7 @@ VRPlanetChase.prototype._createGameObjects = function() {
 	}
 
 	// Create the planet.
-	var planetGeo = new THREE.SphereGeometry( asteroidRadius * 2, 16, 50 );
+	var planetGeo = new THREE.SphereGeometry( this.asteroidRadius * 2, 16, 50 );
 	this.redPlanet = new THREE.Mesh( planetGeo, this.redPlanetMaterial );
 	this._setRandomPosition( this.redPlanet );
 
@@ -200,6 +202,67 @@ VRPlanetChase.prototype._createGameObjects = function() {
 	}
 	GameManager.scene.add(this.redPlanet);
 
+};
+
+
+VRPlanetChase.prototype._createStars = function() {
+	// based on http://threejs.org/examples/misc_controls_fly.html
+
+	var r = this.asteroidRadius; 	// for scaling star to match scene
+
+	var i, starsGeometry = [ new THREE.Geometry(), new THREE.Geometry() ];
+
+	for ( i = 0; i < 250; i ++ ) {
+
+		var vertex = new THREE.Vector3();
+		vertex.x = Math.random() * 2 - 1;
+		vertex.y = Math.random() * 2 - 1;
+		vertex.z = Math.random() * 2 - 1;
+		vertex.multiplyScalar( r );
+
+		starsGeometry[ 0 ].vertices.push( vertex );
+
+	}
+
+	for ( i = 0; i < 1500; i ++ ) {
+
+		var vertex = new THREE.Vector3();
+		vertex.x = Math.random() * 2 - 1;
+		vertex.y = Math.random() * 2 - 1;
+		vertex.z = Math.random() * 2 - 1;
+		vertex.multiplyScalar( r );
+
+		starsGeometry[ 1 ].vertices.push( vertex );
+
+	}
+
+	var stars;
+	var starsMaterials = [
+		new THREE.PointCloudMaterial( { color: 0x555555, size: 2, sizeAttenuation: false } ),
+		new THREE.PointCloudMaterial( { color: 0x555555, size: 1, sizeAttenuation: false } ),
+		new THREE.PointCloudMaterial( { color: 0x333333, size: 2, sizeAttenuation: false } ),
+		new THREE.PointCloudMaterial( { color: 0x3a3a3a, size: 1, sizeAttenuation: false } ),
+		new THREE.PointCloudMaterial( { color: 0x1a1a1a, size: 2, sizeAttenuation: false } ),
+		new THREE.PointCloudMaterial( { color: 0x1a1a1a, size: 1, sizeAttenuation: false } )
+	];
+
+	for ( i = 10; i < 30; i ++ ) {
+
+		stars = new THREE.PointCloud( starsGeometry[ i % 2 ], starsMaterials[ i % 6 ] );
+
+		stars.rotation.x = Math.random() * 6;
+		stars.rotation.y = Math.random() * 6;
+		stars.rotation.z = Math.random() * 6;
+
+		s = i * 10;
+		stars.scale.set( s, s, s );
+
+		stars.matrixAutoUpdate = false;
+		stars.updateMatrix();
+
+		GameManager.scene.add( stars );
+
+	}
 };
 
 VRPlanetChase.prototype._setRandomPosition = function(mesh) {
@@ -276,6 +339,7 @@ VRPlanetChase.prototype.collisionCallback = function( collisionInfo ) {
 		// Reset the game. Create new set of asteroids to navigate.
 		setTimeout(function() {
 
+			this.soundWarp.play();
 			GameManager.scene.remove(this.asteroidsArray);
 			GameManager.scene.remove(this.redPlanet);
 
