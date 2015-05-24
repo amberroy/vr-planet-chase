@@ -67,7 +67,7 @@ VRPlanetChase.prototype._createFlyControls = function() {
 	// Fly controls: [WASD] move, [R|F] up | down,
 	// [Q|E] roll, [up|down] pitch, [left|right] yaw
 	this.flyControls = new THREE.FlyControls( this.cockpit );
-	this.flyControls.movementSpeed = 10;
+	this.flyControls.movementSpeed = 100;
 	this.flyControls.domElement = document.body;
 	this.flyControls.rollSpeed = Math.PI / 24;
 	this.flyControls.autoForward = false;

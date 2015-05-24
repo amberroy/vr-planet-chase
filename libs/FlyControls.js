@@ -216,6 +216,8 @@ THREE.FlyControls = function ( object, domElement ) {
 		// expose the rotation vector for convenience
 		this.object.rotation.setFromQuaternion( this.object.quaternion, this.object.rotation.order );
 
+		// force update, else object appears to "jump" ahead of player when moving in VR mode
+		this.object.updateMatrixWorld();
 
 	};
 
