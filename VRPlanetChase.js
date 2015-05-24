@@ -65,11 +65,17 @@ VRPlanetChase =	function ( params ) {
 		{ side: THREE.DoubleSide,
 		  map: THREE.ImageUtils.loadTexture( "./assets/images/spaceship-texture.png" ),
 		  transparent: true,
+		  color: this.colors.RED,
 		  opacity: 0.8,
 		}
 	);
 	this.capsuleMaterialVictory = new THREE.MeshBasicMaterial(
-		{ wireframe: true, side: THREE.DoubleSide, color: this.colors.BLUE }
+		{ side: THREE.DoubleSide,
+		  map: THREE.ImageUtils.loadTexture( "./assets/images/spaceship-texture.png" ),
+		  transparent: true,
+		  color: this.colors.GOLD,
+		  opacity: 0.8,
+		}
 	);
 
 };
@@ -103,20 +109,6 @@ VRPlanetChase.prototype.update = function() {
 	this.flyControls.update( delta );
 
 	this.redPlanet.rotation.y += 0.001;
-	/*
-	for (var i=0; i < this.asteroidsArray.length; i++ ) {
-		var asteroid = this.asteroidsArray[i];
-		asteroid.rotation.y += 10;
-		console.log("asteroid rotation", asteroid.rotation);
-	}
-	*/
-	/*
-	if ( this.isRedPlanetFound ) {
-		this.capsuleMesh.rotation.y += 0.01;
-	} else {
-		this.capsuleMesh.rotation.y = 0;
-	}
-	*/
 
 } // no-op
 
@@ -348,12 +340,10 @@ VRPlanetChase.prototype.collisionCallback = function( collisionInfo ) {
 
 		this.isRedPlanetFound = true;
 
-		/* TODO
 		this.capsuleMesh.material = this.capsuleMaterialVictory;
 		setTimeout(function() {
 			this.capsuleMesh.material = this.capsuleMaterial;
 		}.bind( this ), 3000)
-		*/
 
 		this.soundVictory.play();
 
@@ -374,17 +364,11 @@ VRPlanetChase.prototype.collisionCallback = function( collisionInfo ) {
 
 	} else {
 
-		/* TODO
-		var capsuleMeshClone = this.capsuleMesh.clone();
-		capsuleMeshClone.material = this.capsuleMaterialCrash; // XXX
-		GameManager.scene.add( capsuleMeshClone );
-
-		//this.capsuleMesh.material = this.capsuleMaterialCrash; // XXX
+		this.capsuleMesh.material = this.capsuleMaterialCrash;
 		setTimeout(function() {
-			//this.capsuleMesh.material = this.capsuleMaterial; // XXX
+			this.capsuleMesh.material = this.capsuleMaterial;
 			GameManager.scene.remove( capsuleMeshClone );
 		}.bind( this ), 400)
-		*/
 
 		this.soundCrash.play();
 
