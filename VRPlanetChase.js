@@ -126,7 +126,6 @@ VRPlanetChase.prototype._createCockpit = function() {
 
     this.capsuleMesh = new THREE.Mesh(
     	new THREE.CylinderGeometry( top, bottom, height, radiusSeg, heightSeg, isOpenEnded ),
-		//new THREE.MeshBasicMaterial( { wireframe: true, side: THREE.DoubleSide } )
 		this.capsuleMaterial
 	);
     this.capsuleMesh.rotation.x =  -1 * Math.PI / 2;
