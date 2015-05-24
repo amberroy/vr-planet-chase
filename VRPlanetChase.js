@@ -54,10 +54,19 @@ VRPlanetChase =	function ( params ) {
 	};
 
 	this.capsuleMaterial = new THREE.MeshBasicMaterial(
-		{ wireframe: true, side: THREE.DoubleSide }
+		//{ wireframe: true, side: THREE.DoubleSide }
+		{ side: THREE.DoubleSide,
+		  map: THREE.ImageUtils.loadTexture( "./assets/images/spaceship-texture.png" ),
+		  transparent: true,
+		  opacity: 0.5,
+		}
 	);
 	this.capsuleMaterialCrash = new THREE.MeshBasicMaterial(
-		{ wireframe: true, side: THREE.DoubleSide, color: this.colors.RED }
+		{ side: THREE.DoubleSide,
+		  map: THREE.ImageUtils.loadTexture( "./assets/images/spaceship-texture.png" ),
+		  transparent: true,
+		  opacity: 0.8,
+		}
 	);
 	this.capsuleMaterialVictory = new THREE.MeshBasicMaterial(
 		{ wireframe: true, side: THREE.DoubleSide, color: this.colors.BLUE }
@@ -101,6 +110,13 @@ VRPlanetChase.prototype.update = function() {
 		console.log("asteroid rotation", asteroid.rotation);
 	}
 	*/
+	/*
+	if ( this.isRedPlanetFound ) {
+		this.capsuleMesh.rotation.y += 0.01;
+	} else {
+		this.capsuleMesh.rotation.y = 0;
+	}
+	*/
 
 } // no-op
 
@@ -118,14 +134,15 @@ VRPlanetChase.prototype._createCockpit = function() {
 
     this.capsuleMesh = new THREE.Mesh(
     	new THREE.CylinderGeometry( top, bottom, height, radiusSeg, heightSeg, isOpenEnded ),
-		new THREE.MeshBasicMaterial( { wireframe: true, side: THREE.DoubleSide } )
+		//new THREE.MeshBasicMaterial( { wireframe: true, side: THREE.DoubleSide } )
+		this.capsuleMaterial
 	);
     this.capsuleMesh.rotation.x =  -1 * Math.PI / 2;
 	this.cockpit.add( this.capsuleMesh );
 
 	var backWallMesh = new THREE.Mesh(
     	new THREE.CircleGeometry( bottom, heightSeg ),
-		new THREE.MeshBasicMaterial( { color: "#222222", side: THREE.DoubleSide } )
+		this.capsuleMaterial
 	);
 	backWallMesh.position.z = height / 2;
 	this.cockpit.add( backWallMesh );
@@ -158,6 +175,8 @@ VRPlanetChase.prototype._createFlyControls = function() {
 
 
 VRPlanetChase.prototype._createGameObjects = function() {
+
+	this.isRedPlanetFound = false;
 
 	console.log("Creating new asteroid field");
 
@@ -329,10 +348,12 @@ VRPlanetChase.prototype.collisionCallback = function( collisionInfo ) {
 
 		this.isRedPlanetFound = true;
 
+		/* TODO
 		this.capsuleMesh.material = this.capsuleMaterialVictory;
 		setTimeout(function() {
 			this.capsuleMesh.material = this.capsuleMaterial;
 		}.bind( this ), 3000)
+		*/
 
 		this.soundVictory.play();
 
@@ -353,10 +374,17 @@ VRPlanetChase.prototype.collisionCallback = function( collisionInfo ) {
 
 	} else {
 
-		this.capsuleMesh.material = this.capsuleMaterialCrash;
+		/* TODO
+		var capsuleMeshClone = this.capsuleMesh.clone();
+		capsuleMeshClone.material = this.capsuleMaterialCrash; // XXX
+		GameManager.scene.add( capsuleMeshClone );
+
+		//this.capsuleMesh.material = this.capsuleMaterialCrash; // XXX
 		setTimeout(function() {
-			this.capsuleMesh.material = this.capsuleMaterial;
+			//this.capsuleMesh.material = this.capsuleMaterial; // XXX
+			GameManager.scene.remove( capsuleMeshClone );
 		}.bind( this ), 400)
+		*/
 
 		this.soundCrash.play();
 
