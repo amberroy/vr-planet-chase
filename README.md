@@ -4,62 +4,28 @@ World's First browser-based virtual reality game!  [PLAY NOW](http://amberroy.gi
 
 Share link: http://VRplanetchase.com
 
-This simple but ground-breaking WebVR game is implemented using Javascript and runs in a web browser, unlike Oculus Rift games built for PC or Mac using game engines like Unity3d.
+This simple but ground-breaking WebVR game is implemented using Javascript and runs in a web browser, See [WebVR.info](http://webvr.info) for more info and to download a VR-enabled build of Chromium (not yet tested on Firefox Nightly).
+
+###Navigate the asteroid field to reach the Red Planet!
+
+CONTROLS: **WASD** keys move ship, **arrow keys** steer ship.
 
 ![VR Planet Chase screenshot](screenshot.png)
 
-###Requirements
-#### WebVR Mode
 
-1. Oculus Rift DK2 ([order from Oculus](https://www.oculus.com/order/))
-2. Desktop or Laptop computer running:
-  - Windows or Mac OS
-  - Oculus Runtime ([download from Oculus](https://developer.oculusvr.com/))
-  - VR-enabled build of Firefox Nightly ([download from Mozilla](https://wiki.mozilla.org/User:VladVukicevic/VRBuilds))  
-  or Chromium ([download from Google](https://drive.google.com/folderview?id=0BzudLt22BqGRbW9WTHMtOWMzNjQ&usp=sharing#list))
-
-#### Cardboard Mode
-1. VR Viewer ([buy from DodoCase](http://www.dodocase.com/products/google-cardboard-vr-goggle-toolkit))
-2. Android smartphone running:
-  - WebGL enabled mobile browser, such as Google Chrome for Android 4+  
-    See <a href="https://cardboard.withgoogle.com/">Google Cardboard FAQ</a> for list of compatible cell phones.  
-    (iPhone not supported since Chrome full-screen not allowed on iOS 8)</ol>
-
-
-###How To Play
-####Navigate the asteroid field to reach the Red Planet!
-
-> **Controls:**
-
-> - **Forward** thrusters: Left mouse button *or* W key 
-> - **Backward** thrusters: Center mouse button *or* S key  
-> - **Steering**: Turn your head *or* arrow keys
-> - Hold down the button to keep moving.
-> - You will move in the direction you are looking.
->
->**Cardboard Mode**: You will move forward automatically.  
-You can also tap the screen to stop/start movement.  
-If you run into an asteroid, turn around to reverse course.
->
->**Leap Motion**: Place one hand in front the the sensor  
-to move forward, two hands to move backwards.
-     
-
-To start the game, click the "VR" button at the top-left of the page, or press the Enter key.  This will put your browser into full-screen VR mode, and you may need to click "Allow" to confirm.  Be sure your Oculus Rift DK2 is connected to your computer, or else you will get the "No HMD found" error message. Alternatively, tap the "Cardboard" button and insert your smartphone into the viewer.
-
-Once you get close enough to the Red Planet it will turn blue.  Congratulations!  Next you will be transported to a new galaxy, with a different asteroid field to explore and a new Red Planet to find.  The asteroid and planet positions are randomly generated, so the difficulty of your search will vary from one galaxy to the next; some will seem easier, some harder.
+Once you get close enough to the Red Planet your ship turns gold.  Congratulations!  Next you will be transported to a new galaxy, with a different asteroid field to explore and a new Red Planet to find.  The asteroid and planet positions are randomly generated, so the difficulty of your search will vary from one galaxy to the next; some will seem easier, some harder.
 
 > **Tip:** The Red Planet might be hidden behind an asteroid, so if you don't spot it right away, move around and keep looking.
 
-Note there is no "end" to the game, as it was designed to be used in a demo (or party!) situation, where users play for a few minutes than pass the Oculus Rift DK2 to the next player. VR Planet Chase can be played seated in front of your laptop or desktop computer, but is best enjoyed as a "standing VR" experience, with a wireless mouse as the input device (which can be held in your hand since only the buttons are used).
+Note there is no "end" to the game, and although your ship turns red for a few seconds if you crash into an asteroid, there is no damage meter or fuel gauge.  You cannot "die" in the game and can keep playing as long as you want. This game designed for the Oculus Rift DK2, but will also run in a web browser and in "preview mode" on GearVR, Google Cardboard, or any smartphone.
 
-If you have questions, comments, or contributions please email VRplanetchase@gmail.com
+###Credits  
+Code: AMBER ROY - follow on [Twitter](http://twitter.com/amberroyVR)  
+Music: LLOYD BOLAND - follow on [Soundcloud](https://soundcloud.com/lloydboland/interstellar-unfinished)  
+Frameworks: [Three.js](http://threejs.org), [webvr-boilderplate](https://github.com/borismus/webvr-boilerplate)
+
+History: Version 1 (10-18-2014), Version 2 (05-23-2015).  
+Awards: 2nd Place, Best Web-Based App, May 2015 [VR Hackathon](http://vrhackathon.com)  
 
 
-**Credits**  
-Game Programmer: Amber Roy  
-Created on: October 18, 2014  
-Special thanks to: [VR Hackathon](http://vrhackathon.com), [SFVR](http://www.meetup.com/virtualreality), [SVVR](http://svvr.com)
-
-
-Copyright (c) Amber Roy 2014.  All rights reserved.  
+Copyright (c) 2014-2015 Amber Roy.  All rights reserved.  

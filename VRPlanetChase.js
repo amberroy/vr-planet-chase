@@ -15,8 +15,9 @@
 // * sci-fi-warp [people/LittleRobotSoundFactory/sounds/270524]
 //
 // Textures:
-// * RockPerforated [http://www.cgtextures.com/texview.php?id=38675&PHPSESSID=oldd4h4s24tovt8avisojo2vq5]
-// * RedRock [http://fc09.deviantart.net/fs45/i/2009/111/6/6/Red_Rock_Texture_by_Dachande99.jpg]
+// * RockPerforated [http://www.cgtextures.com/texview.php?id=38675]
+// * RedRock [http://dachande99.deviantart.com/art/Red-Rock-Texture-119985635]
+// * Spaceship [http://svenniemannie.deviantart.com/art/Spaceship-Texture-91959740]
 //
 // License: MIT License [http://opensource.org/licenses/MIT]
 // Copyright (c) 2015 Amber Roy
@@ -110,7 +111,7 @@ VRPlanetChase.prototype.update = function() {
 
 	this.redPlanet.rotation.y += 0.001;
 
-} // no-op
+};
 
 VRPlanetChase.prototype._createCockpit = function() {
 
@@ -169,8 +170,6 @@ VRPlanetChase.prototype._createGameObjects = function() {
 
 	this.isRedPlanetFound = false;
 
-	console.log("Creating new asteroid field");
-
 	// Create the game world objects and randomize their position.
 
 	var NUM_ASTEROIDS = 100;
@@ -211,6 +210,8 @@ VRPlanetChase.prototype._createGameObjects = function() {
 		GameManager.scene.add( this.asteroidsArray[i] );
 	}
 	GameManager.scene.add(this.redPlanet);
+
+	console.log("Created " + NUM_ASTEROIDS + " asteroids and red planet at ", this.redPlanet.position);
 
 };
 
@@ -349,15 +350,7 @@ VRPlanetChase.prototype.collisionCallback = function( collisionInfo ) {
 		// Reset the game. Create new set of asteroids to navigate.
 		setTimeout(function() {
 
-			this.soundWarp.play();
-			GameManager.scene.remove(this.asteroidsArray);
-			GameManager.scene.remove(this.redPlanet);
-
-			// Start player back at center
-			this.player.position.copy( GameManager.scene.position );
-
-			this._createGameObjects();
-			this.isRedPlanetFound = false;
+			this.resetGame();
 
 		}.bind( this ), 3000);	 // Wait a few seconds before restarting.
 
@@ -374,6 +367,22 @@ VRPlanetChase.prototype.collisionCallback = function( collisionInfo ) {
 	}
 
 };
+
+
+VRPlanetChase.prototype.resetGame = function(moveDistance) {
+
+	this.soundWarp.play();
+	GameManager.scene.remove(this.asteroidsArray);
+	GameManager.scene.remove(this.redPlanet);
+
+	// Start player back at center
+	GameManager.player.position.copy( GameManager.scene.position );
+
+	this._createGameObjects();
+	this.isRedPlanetFound = false;
+
+};
+
 
 VRPlanetChase.prototype.moveForward = function(moveDistance) {
 
