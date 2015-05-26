@@ -18,7 +18,7 @@ Once you get close enough to the Red Planet your ship turns gold.  Congratulatio
 > **Tip:** The Red Planet might be hidden behind an asteroid, so if you don't spot it right away, move around and keep looking.
 
 Note although your ship turns red for a few seconds if you crash into an asteroid, there is no damage meter or fuel gauge. Thus you cannot "die" and can keep playing as long as you want.
-This game designed for the Oculus Rift DK2, but will also run in a web browser and on GearVR, Google Cardboard, Android/iPhone HMDs, or any smartphone.
+This game designed for the Oculus Rift DK2, but will also run in a web browser and in "preview mode" on GearVR, Google Cardboard, or any smartphone.
 
 ###Credits  
 Code: AMBER ROY - follow on [Twitter](http://twitter.com/amberroyVR)  

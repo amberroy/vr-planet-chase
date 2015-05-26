@@ -134,7 +134,7 @@ VRPlanetChase.prototype._createFlyControls = function() {
 	this.flyControls = new THREE.FlyControls( this.cockpit, document.body, params );
 	this.flyControls.movementSpeed = 100;
 	this.flyControls.rollSpeed = Math.PI / 24;
-	this.flyControls.autoForward = GameManager.vrManager.Util.isMobile();
+	this.flyControls.autoForward = false;
 	this.flyControls.dragToLook = true;
 
 	this.cockpit.add( GameManager.player );
