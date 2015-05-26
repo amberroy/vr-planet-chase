@@ -43,7 +43,7 @@ var BarrelDistortion = {
 
     'float poly(float val) {',
       'return 1.0 + (distortion.x + distortion.y * val) * val;',
-
+    '}',
 
     'vec2 barrel(vec2 v) {',
       'vec2 w = v - vec2(0.5, 0.5);',
@@ -675,9 +675,6 @@ function WebVRManager(renderer, effect, params) {
     this.defaultMode = hmd ? Modes.COMPATIBLE : Modes.INCOMPATIBLE;
     this.button.setMode(this.defaultMode);
   }.bind(this));
-
-  // Add reference to the polyfill utility. -AJR
-  this.Util = Util;
 }
 
 /**
