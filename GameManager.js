@@ -5,6 +5,7 @@
 
 GameManager = function( game, params ) {
 
+	this.game = game;
 	this.init = game && game.init.bind( game ) || this._defaultInit;
 	this.update = game && game.update.bind( game ) || this._defaultUpdate;
 
@@ -28,6 +29,7 @@ GameManager = function( game, params ) {
 	this.scene.add( this.player );
 
 	this._addEventListeners();
+
 };
 
 GameManager.prototype.loadAudio = function(filenameBase) {
