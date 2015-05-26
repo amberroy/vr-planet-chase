@@ -29,6 +29,7 @@ GameManager = function( game, params ) {
 	this.scene.add( this.player );
 
 	this._addEventListeners();
+
 };
 
 GameManager.prototype.loadAudio = function(filenameBase) {
