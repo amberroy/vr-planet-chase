@@ -5,8 +5,9 @@
 
 GameManager = function( game, params ) {
 
-	this.init = game && game.init.bind( game ) || this._defaultInit;
-	this.update = game && game.update.bind( game ) || this._defaultUpdate;
+	this.game = game;
+	this.init = this.game && this.game.init.bind( this.game ) || this._defaultInit;
+	this.update = this.game && this.game.update.bind( this.game ) || this._defaultUpdate;
 
 	this.renderer = new THREE.WebGLRenderer({ antialias: true });
 	this.renderer.setPixelRatio( window.devicePixelRatio );
