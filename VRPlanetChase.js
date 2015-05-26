@@ -29,11 +29,6 @@ VRPlanetChase =	function ( params ) {
 	this.isRedPlanetFound = false;
 	this.asteroidsArray;
 
-	this.asteroidMaterial;
-	this.redPlanetMaterial;
-	this.redPlaentFoundMaterial;
-	this.asteroidCollisionMaterial;
-
 	this.cockpit;
 	this.capsuleMesh;
 	this.flyControls;
@@ -47,37 +42,13 @@ VRPlanetChase =	function ( params ) {
 
 	this.asteroidRadius = 50;
 
-	this.colors = {
-		BLUE: 0x0000ff,
-		RED: 0xff0000,
-		GRAY: 0x808080,
-		GOLD: 0xFFD700,
+	this.colorObjects = {
+		WHITE: new THREE.Color("#ffffff"),
+		BLUE: new THREE.Color("#0000ff"),
+		RED: new THREE.Color("#ff0000"),
+		GRAY: new THREE.Color("#808080"),
+		GOLD: new THREE.Color("#FFD700"),
 	};
-
-	this.capsuleMaterial = new THREE.MeshBasicMaterial(
-		//{ wireframe: true, side: THREE.DoubleSide }
-		{ side: THREE.DoubleSide,
-		  map: THREE.ImageUtils.loadTexture( "./assets/images/spaceship-texture.png" ),
-		  transparent: true,
-		  opacity: 0.5,
-		}
-	);
-	this.capsuleMaterialCrash = new THREE.MeshBasicMaterial(
-		{ side: THREE.DoubleSide,
-		  map: THREE.ImageUtils.loadTexture( "./assets/images/spaceship-texture.png" ),
-		  transparent: true,
-		  color: this.colors.RED,
-		  opacity: 0.8,
-		}
-	);
-	this.capsuleMaterialVictory = new THREE.MeshBasicMaterial(
-		{ side: THREE.DoubleSide,
-		  map: THREE.ImageUtils.loadTexture( "./assets/images/spaceship-texture.png" ),
-		  transparent: true,
-		  color: this.colors.GOLD,
-		  opacity: 0.8,
-		}
-	);
 
 };
 
@@ -125,16 +96,24 @@ VRPlanetChase.prototype._createCockpit = function() {
     var heightSeg = 50;
     var isOpenEnded = true;
 
+	var capsuleMaterial = new THREE.MeshBasicMaterial(
+		{ side: THREE.DoubleSide,
+		  map: THREE.ImageUtils.loadTexture( "./assets/images/spaceship-texture.png" ),
+		  transparent: true,
+		  opacity: 0.5,
+		}
+	);
+
     this.capsuleMesh = new THREE.Mesh(
     	new THREE.CylinderGeometry( top, bottom, height, radiusSeg, heightSeg, isOpenEnded ),
-		this.capsuleMaterial
+		capsuleMaterial
 	);
     this.capsuleMesh.rotation.x =  -1 * Math.PI / 2;
 	this.cockpit.add( this.capsuleMesh );
 
 	var backWallMesh = new THREE.Mesh(
     	new THREE.CircleGeometry( bottom, heightSeg ),
-		this.capsuleMaterial
+		capsuleMaterial
 	);
 	backWallMesh.position.z = height / 2;
 	this.cockpit.add( backWallMesh );
@@ -180,21 +159,19 @@ VRPlanetChase.prototype._createGameObjects = function() {
 	//var geometry = new THREE.SphereGeometry( 50, 16, 16);
 	var asteroidGeo = new THREE.SphereGeometry( this.asteroidRadius, 16, 50);
 
-	this.asteroidMaterial = new THREE.MeshPhongMaterial(
+	var asteroidMaterial = new THREE.MeshPhongMaterial(
 		{ map: THREE.ImageUtils.loadTexture( "./assets/images/RockPerforated.jpg" ) }
 	);
-	this.redPlanetMaterial = new THREE.MeshPhongMaterial(
+	var redPlanetMaterial = new THREE.MeshPhongMaterial(
 		{ map: THREE.ImageUtils.loadTexture( "./assets/images/RedRock.jpg" ) }
 	);
-	this.redPlaentFoundMaterial = new THREE.MeshPhongMaterial({ color: this.colors.BLUE });
-	this.asteroidCollisionMaterial = new THREE.MeshPhongMaterial({ color: this.colors.GOLD });
 
 	this.asteroidsArray = [];								// Used for collision detection.
 
 	// Create the asteroids.
 	for (var i = 0; i < NUM_ASTEROIDS; i ++) {
 
-		var asteroid = new THREE.Mesh( asteroidGeo, this.asteroidMaterial );
+		var asteroid = new THREE.Mesh( asteroidGeo, asteroidMaterial );
 		this._setRandomPosition(asteroid);
 		asteroid.matrixAutoUpdate = false; // Remove this if asteroids rotate.
 
@@ -203,8 +180,14 @@ VRPlanetChase.prototype._createGameObjects = function() {
 
 	// Create the planet.
 	var planetGeo = new THREE.SphereGeometry( this.asteroidRadius * 2, 16, 50 );
-	this.redPlanet = new THREE.Mesh( planetGeo, this.redPlanetMaterial );
+	this.redPlanet = new THREE.Mesh( planetGeo, redPlanetMaterial );
+
 	this._setRandomPosition( this.redPlanet );
+
+	// uncomment for debugging
+	//this.redPlanet.position.copy( GameManager.player.position );
+	//this.redPlanet.position.z -= this.redPlanet.geometry.boundingSphere.radius * 4;
+	//this.redPlanet.updateMatrixWorld();
 
 	for (var i=0; i < this.asteroidsArray.length; i++) {
 		GameManager.scene.add( this.asteroidsArray[i] );
@@ -318,7 +301,6 @@ VRPlanetChase.prototype.checkCollision = function(cameraPosition) {
 		collisionInfo.isRedPlanet = true;
 	}
 
-	// if (isCollision) { //
 	if ( collisionInfo.collisionObject ) { //
 		console.log("Collision detected", collisionInfo.collisionObject);
 	}
@@ -340,9 +322,9 @@ VRPlanetChase.prototype.collisionCallback = function( collisionInfo ) {
 
 		this.isRedPlanetFound = true;
 
-		this.capsuleMesh.material = this.capsuleMaterialVictory;
+		this.capsuleMesh.material.color = this.colorObjects.GOLD;
 		setTimeout(function() {
-			this.capsuleMesh.material = this.capsuleMaterial;
+			this.capsuleMesh.material.color = this.colorObjects.WHITE;
 		}.bind( this ), 3000)
 
 		this.soundVictory.play();
@@ -356,10 +338,9 @@ VRPlanetChase.prototype.collisionCallback = function( collisionInfo ) {
 
 	} else {
 
-		this.capsuleMesh.material = this.capsuleMaterialCrash;
+		this.capsuleMesh.material.color = this.colorObjects.RED;
 		setTimeout(function() {
-			this.capsuleMesh.material = this.capsuleMaterial;
-			GameManager.scene.remove( capsuleMeshClone );
+			this.capsuleMesh.material.color = this.colorObjects.WHITE;
 		}.bind( this ), 400)
 
 		this.soundCrash.play();
@@ -372,11 +353,14 @@ VRPlanetChase.prototype.collisionCallback = function( collisionInfo ) {
 VRPlanetChase.prototype.resetGame = function(moveDistance) {
 
 	this.soundWarp.play();
-	GameManager.scene.remove(this.asteroidsArray);
-	GameManager.scene.remove(this.redPlanet);
+	for ( var i=0; i < this.asteroidsArray.length; i++) {
+		GameManager.scene.remove( this.asteroidsArray[i] );
+	}
+	GameManager.scene.remove( this.redPlanet );
 
 	// Start player back at center
 	GameManager.player.position.copy( GameManager.scene.position );
+	GameManager.player.updateMatrixWorld();
 
 	this._createGameObjects();
 	this.isRedPlanetFound = false;
