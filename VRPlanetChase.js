@@ -64,9 +64,11 @@ VRPlanetChase.prototype.init = function() {
 	this._createFlyControls();
 
 	// Need light source with phong material, otherwise spheres look black.
-	var pointerOne = new THREE.PointLight(0xffffff);
-	pointerOne.position.set(-100,-90,130);
-	GameManager.scene.add(pointerOne);
+	var point = new THREE.PointLight(0xffffff);
+	point.position.set(-100,-90,130);
+	GameManager.scene.add(point);
+	var ambient = new THREE.AmbientLight(0x101010);
+	GameManager.scene.add(ambient);
 
 	this._createStars();
 	this._createGameObjects();

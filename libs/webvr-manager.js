@@ -665,7 +665,8 @@ function WebVRManager(renderer, effect, params) {
     if (hmd) {
       this.activateVR_();
       // Only enable distortion if we are dealing using the polyfill.
-      if (hmd.deviceName.indexOf('webvr-polyfill') == 0) {
+      //if (hmd.deviceName.indexOf('webvr-polyfill') == 0) {
+      if (hmd.displayName.indexOf('webvr-polyfill') == 0) { // AJR
         this.distorter.setActive(true);
       }
     } else {
@@ -682,10 +683,12 @@ function WebVRManager(renderer, effect, params) {
  */
 WebVRManager.prototype.getHMD_ = function() {
   return new Promise(function(resolve, reject) {
-    navigator.getVRDevices().then(function(devices) {
+    //navigator.getVRDevices().then(function(devices) {
+    navigator.getVRDisplays().then(function(devices) { // AJR
       // Promise succeeds, but check if there are any devices actually.
       for (var i = 0; i < devices.length; i++) {
-        if (devices[i] instanceof HMDVRDevice) {
+        //if (devices[i] instanceof HMDVRDevice) {
+        if (devices[i] instanceof VRDisplay) { // AJR
           resolve(devices[i]);
           break;
         }

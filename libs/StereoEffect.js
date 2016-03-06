@@ -1,37 +1,16 @@
-// this file downloaded on 10-18-2014
-// https://github.com/mrdoob/three.js/blob/master/examples/js/effects/StereoEffect.js
-// Modified to reset renderer.autoClear back to orignal value.  See XXX lines.
 /**
  * @author alteredq / http://alteredqualia.com/
  * @authod mrdoob / http://mrdoob.com/
  * @authod arodic / http://aleksandarrodic.com/
- */
+ * @authod fonserbc / http://fonserbc.github.io/
+*/
 
 THREE.StereoEffect = function ( renderer ) {
 
-	// API
-
-	this.separation = 3;
-
-	// internals
-
-	var _width, _height;
-
-	var _position = new THREE.Vector3();
-	var _quaternion = new THREE.Quaternion();
-	var _scale = new THREE.Vector3();
-
-	var _cameraL = new THREE.PerspectiveCamera();
-	var _cameraR = new THREE.PerspectiveCamera();
-
-	// initialization
-
-	// renderer.autoClear = false;	// XXX
+	var _stereo = new THREE.StereoCamera();
+	_stereo.aspect = 0.5;
 
 	this.setSize = function ( width, height ) {
-
-		_width = width / 2;
-		_height = height;
 
 		renderer.setSize( width, height );
 
@@ -41,48 +20,25 @@ THREE.StereoEffect = function ( renderer ) {
 
 		scene.updateMatrixWorld();
 
-		if ( camera.parent === undefined ) camera.updateMatrixWorld();
-	
-		camera.matrixWorld.decompose( _position, _quaternion, _scale );
+		if ( camera.parent === null ) camera.updateMatrixWorld();
 
-		// left
+		_stereo.update( camera );
 
-		_cameraL.fov = camera.fov;
-		_cameraL.aspect = 0.5 * camera.aspect;
-		_cameraL.near = camera.near;
-		_cameraL.far = camera.far;
-		_cameraL.updateProjectionMatrix();
+		var size = renderer.getSize();
 
-		_cameraL.position.copy( _position );
-		_cameraL.quaternion.copy( _quaternion );
-		_cameraL.translateX( - this.separation );
-		_cameraL.updateMatrixWorld();
-
-		// right
-
-		_cameraR.near = camera.near;
-		_cameraR.far = camera.far;
-		_cameraR.projectionMatrix = _cameraL.projectionMatrix;
-
-		_cameraR.position.copy( _position );
-		_cameraR.quaternion.copy( _quaternion );
-		_cameraR.translateX( this.separation );
-		_cameraR.updateMatrixWorld();
-
-		//
-		var autoClear = renderer.autoClear;  // XXX
-	    renderer.autoClear = false;	// XXX
-
-		renderer.setViewport( 0, 0, _width * 2, _height );
+		renderer.setScissorTest( true );
 		renderer.clear();
 
-		renderer.setViewport( 0, 0, _width, _height );
-		renderer.render( scene, _cameraL );
+		renderer.setScissor( 0, 0, size.width / 2, size.height );
+		renderer.setViewport( 0, 0, size.width / 2, size.height );
+		renderer.render( scene, _stereo.cameraL );
 
-		renderer.setViewport( _width, 0, _width, _height );
-		renderer.render( scene, _cameraR );
+		renderer.setScissor( size.width / 2, 0, size.width / 2, size.height );
+		renderer.setViewport( size.width / 2, 0, size.width / 2, size.height );
+		renderer.render( scene, _stereo.cameraR );
 
-	    renderer.autoClear = autoClear;	// XXX
+		renderer.setScissorTest( false );
+
 	};
 
 };
