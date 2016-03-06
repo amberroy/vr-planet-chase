@@ -30,10 +30,14 @@
 	// even if the device is incompatible with Cardboard (eg. desktop).
 	// NOTE: This should never be checked in as true.
 	CARDBOARD_DEBUG = false;
+	WebVRConfig = {};
+	// use FlyControls: WASD move ship forward/back, arrows steer
+	WebVRConfig.MOUSE_KEYBOARD_CONTROLS_DISABLED = true;
+	// TODO: Upgrade to WebVR 1.0
 </script>
 
 <!-- Required by webvr-boilerplace -->
-<script src="./libs/three.js"></script>
+<script src="./libs/three.min.js"></script>
 <script src="./libs/VRControls.js"></script>
 <script src="./libs/VREffect.js"></script>
 <script src="./libs/webvr-polyfill.js"></script>

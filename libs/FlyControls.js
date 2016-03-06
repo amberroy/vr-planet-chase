@@ -10,14 +10,14 @@ THREE.FlyControls = function ( object, domElement, params ) {
 	if ( domElement ) this.domElement.setAttribute( 'tabindex', -1 );
 
 	// options parameters
-	var p = params || {};
+	var p = params || {}; // AJR
 
 	// function called before moving, argument is the new position.
 	// returns collisionInfo object, or null if no collision.
-	this.checkCollision  = p.checkCollision || null;
+	this.checkCollision  = p.checkCollision || null; // AJR
 
 	// callback envoked on a collision, argument is the collisionInfo object. 
-	this.collisionCallback  = p.collisionCallback || null;
+	this.collisionCallback  = p.collisionCallback || null; // AJR
 
 	// API
 
@@ -229,14 +229,14 @@ THREE.FlyControls = function ( object, domElement, params ) {
 		objectClone.rotation.setFromQuaternion( objectClone.quaternion, objectClone.rotation.order );
 
 		var collisionInfo = null;
-		if ( this.checkCollision ) {
+		if ( this.checkCollision ) { // AJR
 
 			// Optionally check for collision before moving object.
 			collisionInfo = this.checkCollision( objectClone.position );
 
 		}
 
-		if ( collisionInfo === null ) {
+		if ( collisionInfo === null ) { // AJR
 
 			// No collision, ok to move.
 			this.object.position.copy( objectClone.position );
@@ -245,7 +245,7 @@ THREE.FlyControls = function ( object, domElement, params ) {
 			// force update, else object appears to "jump" ahead of player when moving in VR mode
 			this.object.updateMatrixWorld();
 
-		} else {
+		} else { // AJR
 
 			// Collision detected!  Do not apply movement.
 			if ( this.collisionCallback ) {
