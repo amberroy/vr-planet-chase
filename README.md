@@ -4,7 +4,7 @@ World's First browser-based virtual reality game!  [PLAY NOW](http://amberroy.gi
 
 Share link: http://VRplanetchase.com
 
-This simple but ground-breaking WebVR game is implemented using Javascript and runs in a web browser, See [WebVR.info](http://webvr.info) for more info and to download a VR-enabled build of Chromium (not yet tested on Firefox Nightly).
+This simple but ground-breaking WebVR game is implemented using Javascript and runs in a web browser, See [WebVR.info](http://webvr.info) for more info and to download a VR-enabled build of Chrome.
 
 ###Navigate the asteroid field to reach the Red Planet!
 
@@ -21,12 +21,12 @@ Note although your ship turns red for a few seconds if you crash into an asteroi
 This game designed for the Oculus Rift DK2, but will also run in a web browser and in "preview mode" on GearVR, Google Cardboard, or any smartphone.
 
 ###Credits  
-Code: AMBER ROY - follow on [Twitter](http://twitter.com/amberroyVR)  
+Code: AMBER ROY - follow on [Twitter](http://twitter.com/amberroyVR) [YouTube](http://youtube.com/amberVR)  
 Music: LLOYD BOLAND - follow on [Soundcloud](https://soundcloud.com/lloydboland/interstellar-unfinished)  
 Frameworks: [Three.js](http://threejs.org), [webvr-boilderplate](https://github.com/borismus/webvr-boilerplate)
 
 History: Version 1 (10-18-2014), Version 2 (05-23-2015).  
-Awards: 2nd Place, Best Web-Based App, May 2015 [VR Hackathon](http://vrhackathon.com)  
+Awards: Best Web-Based App - 2nd Place - May 2015 [VR Hackathon](http://damonhernandez.blogspot.com/2015/05/getting-creative-with-immersive-tech.html)
 
 
 Copyright (c) 2014-2015 Amber Roy.  All rights reserved.  
